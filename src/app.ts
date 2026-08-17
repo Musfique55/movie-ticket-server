@@ -3,6 +3,8 @@ import cookieParser from "cookie-parser";
 import express from "express";
 import helmet from "helmet";
 import morgan from "morgan";
+import { routes } from "./routes";
+import { globalErrorHandler } from "@/middleware/globalErrorHandler";
 
 const app = express();
 
@@ -18,5 +20,9 @@ app.use(morgan("dev"));
 app.get("/health", (req, res) => {
   res.status(200).json({ message: "Server is up & healthy" });
 });
+
+app.use("/api/v1", routes);
+
+app.use(globalErrorHandler);
 
 export default app;
