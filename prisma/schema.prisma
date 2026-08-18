@@ -7,15 +7,21 @@ datasource db {
   provider = "postgresql"
 }
 
-enum SeatStatus {
+enum ShowSeatStatus {
   LOCKED
   AVAILABLE
   BOOKED
 }
 
+enum SeatStatus {
+  AVAILABLE
+  UNAVAILABLE
+}
+
 enum ReservationStatus {
   CONFIRMED
   CANCELLED
+  PENDING
 }
 
 enum Role {
@@ -48,9 +54,10 @@ model Reservation {
   id          String            @id @unique @default(cuid())
   userId      String
   user        User              @relation(fields: [userId], references: [id])
-  status      ReservationStatus @default(CONFIRMED)
+  status      ReservationStatus @default(PENDING)
   totalAmount Float
   discount    Float?
+  expiresAt   DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -61,11 +68,12 @@ model Reservation {
 }
 
 model Seat {
-  id        String   @id @default(cuid())
+  id        String     @id @default(cuid())
   row       String
   number    Int
   basePrice Float
   type      SeatType
+  status    SeatStatus @default(AVAILABLE)
 
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
@@ -76,10 +84,10 @@ model Seat {
 }
 
 model ShowSeat {
-  id         String     @id @default(cuid())
+  id         String         @id @default(cuid())
   seatId     String
   showTimeId String
-  status     SeatStatus @default(AVAILABLE)
+  status     ShowSeatStatus @default(AVAILABLE)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { CreateUserDTO } from "./user.schema";
 import bcrypt from "bcryptjs";
-import { Role } from "@/generated/prisma/enums";
+import { Role } from "@/generated/prisma/client";
 
 const userServices = async (data: CreateUserDTO) => {
   try {
