@@ -115,12 +115,13 @@ model ShowTime {
 }
 
 model Ticket {
-  id            String   @id @default(cuid())
+  id            String @id @default(cuid())
   reservationId String
   showSeatId    String
   price         Float
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   reservation Reservation @relation(fields: [reservationId], references: [id])
   showSeat    ShowSeat    @relation(fields: [showSeatId], references: [id])
