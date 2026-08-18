@@ -1,8 +1,8 @@
 import AppError from "@/helper/AppError";
 import { Request, Response, NextFunction } from "express";
-import { ZodSchema } from "zod";
+import { z } from "zod";
 
-export const requestValidator = (schema: ZodSchema) => {
+export const requestValidator = (schema: z.ZodType) => {
   return async (req: Request, _res: Response, next: NextFunction) => {
     try {
       const parsedBody = schema.safeParse(req.body);

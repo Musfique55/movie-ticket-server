@@ -1,4 +1,4 @@
-import { SeatType } from "@/generated/prisma/enums";
+import { SeatStatus, SeatType } from "@/generated/prisma/client";
 import z from "zod";
 
 export const createSeatDTO = z
@@ -8,6 +8,7 @@ export const createSeatDTO = z
       number: z.number(),
       basePrice: z.number(),
       type: z.nativeEnum(SeatType),
+      status: z.nativeEnum(SeatStatus).default(SeatStatus.AVAILABLE),
     }),
   )
   .superRefine((data, ctx) => {
@@ -51,4 +52,7 @@ export const createSeatDTO = z
     });
   });
 
+export const updateSeatDTO = createSeatDTO.element.partial();
+
 export type CreateSeatDTO = z.infer<typeof createSeatDTO>;
+export type UpdateSeatDTO = z.infer<typeof updateSeatDTO>;
