@@ -1,5 +1,5 @@
 import "dotenv/config";
-const envs = ["PORT", "DATABASE_URL", "NODE_ENV"];
+const envs = ["PORT", "DATABASE_URL", "NODE_ENV", "REDIS_URL"];
 
 const loadEnvs = () => {
   for (const env of envs) {
@@ -12,10 +12,12 @@ const loadEnvs = () => {
     port: string;
     databaseUrl: string;
     nodeEnv: string;
+    redisUrl: string;
   } = {
     port: process.env.PORT!,
     databaseUrl: process.env.DATABASE_URL!,
     nodeEnv: process.env.NODE_ENV!,
+    redisUrl: process.env.REDIS_URL!,
   };
 
   return value;
