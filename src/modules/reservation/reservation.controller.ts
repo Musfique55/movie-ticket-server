@@ -13,6 +13,17 @@ const createReservation = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const confirmReservation = catchAsync(async (req: Request, res: Response) => {
+  const result = await ReservationServices.confirmReservation(req.body);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Reservation confirmed successfully",
+    data: result,
+  });
+});
+
 export const ReservationController = {
   createReservation,
+  confirmReservation,
 };

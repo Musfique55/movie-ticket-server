@@ -9,4 +9,11 @@ export const createReservationDTO = z.object({
   showTimeId: z.string(),
 });
 
+export const confirmReservationDTO = z.object({
+  reservationId: z.string(),
+  seatIds: z.array(z.string()).min(1),
+});
+
 export type CreateReservationDTO = z.infer<typeof createReservationDTO>;
+
+export type confirmReservationDTO = z.infer<typeof confirmReservationDTO>;
