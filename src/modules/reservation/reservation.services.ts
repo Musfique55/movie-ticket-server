@@ -24,7 +24,13 @@ const createReservation = async (data: CreateReservationDTO) => {
     });
 
     // using setnx to acquire the lock
-    const result = await redisClient.set(lockKey, lockValue, "EX", 60, "NX");
+    const result = await redisClient.set(
+      lockKey,
+      lockValue,
+      "EX",
+      HOLD_DURATION_MINUTES * 60,
+      "NX",
+    );
 
     if (!result) {
       if (acquiredLocks.length > 0) {

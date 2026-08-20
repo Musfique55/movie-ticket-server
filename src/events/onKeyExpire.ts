@@ -26,6 +26,10 @@ redisClient.on("message", async (ch, message) => {
       expiredSeatsBuffer.get(showTimeId)!.add(seatId);
     }
 
+    // debounced for simultaneous seatIds
+    // without this, there will be too many function calls
+    // and each function call will have a DB transaction
+
     if (batchTimer) clearTimeout(batchTimer);
     batchTimer = setTimeout(flushBuffer, BATCH_DELAY_MS);
   }
