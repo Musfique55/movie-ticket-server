@@ -50,23 +50,6 @@ model User {
   @@map("user")
 }
 
-model Reservation {
-  id          String            @id @unique @default(cuid())
-  userId      String
-  user        User              @relation(fields: [userId], references: [id])
-  status      ReservationStatus @default(PENDING)
-  totalAmount Float
-  discount    Float?
-  expiresAt   DateTime?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  tickets   Ticket[]
-
-  @@index([id, userId])
-  @@map("reservation")
-}
-
 model Seat {
   id        String     @id @default(cuid())
   row       String
@@ -112,6 +95,23 @@ model ShowTime {
 
   @@index([id, movieId, startTime, endTime])
   @@map("showTime")
+}
+
+model Reservation {
+  id          String            @id @unique @default(cuid())
+  userId      String
+  user        User              @relation(fields: [userId], references: [id])
+  status      ReservationStatus @default(PENDING)
+  totalAmount Float
+  discount    Float?
+  expiresAt   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  tickets   Ticket[]
+
+  @@index([id, userId])
+  @@map("reservation")
 }
 
 model Ticket {
