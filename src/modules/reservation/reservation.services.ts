@@ -214,7 +214,6 @@ const confirmReservation = async (data: confirmReservationDTO) => {
         })),
       };
     });
-
     return result;
   } catch (error) {
     throw error;

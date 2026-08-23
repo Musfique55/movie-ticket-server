@@ -3,6 +3,7 @@ import { NextFunction, Request, Response } from "express";
 import { ReservationServices } from "./reservation.services";
 import { sendResponse } from "@/helper/sendResponse";
 import { generateTicketPDF } from "@/helper/generateTicketPDF";
+import { sendEmail } from "@/utils/sendEmail";
 
 const createReservation = catchAsync(async (req: Request, res: Response) => {
   const result = await ReservationServices.createReservation(req.body);
@@ -22,7 +23,7 @@ const confirmReservation = catchAsync(async (req: Request, res: Response) => {
     message: "Reservation confirmed successfully",
     data: result,
   });
-  await generateTicketPDF({
+  const ticket = await generateTicketPDF({
     reservationId: result.reservation.id,
     userName: result.userName,
     totalAmount: result.reservation.totalAmount,
@@ -31,6 +32,14 @@ const confirmReservation = catchAsync(async (req: Request, res: Response) => {
     tickets: result.tickets,
   }).catch((err) => {
     console.error("Failed to generate ticket PDF:", err);
+  });
+
+  await sendEmail({
+    to: req.body.email,
+    subject: "Ticket",
+    attachment: ticket!,
+  }).catch((err) => {
+    console.error("Failed to send email:", err);
   });
 });
 

@@ -11,6 +11,8 @@ export const createReservationDTO = z.object({
 
 export const confirmReservationDTO = z.object({
   reservationId: z.string(),
+  email: z.string().email(),
+  name: z.string(),
   seatIds: z.array(z.string()).min(1),
 });
 
