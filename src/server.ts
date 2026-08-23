@@ -16,9 +16,11 @@ const bootStrap = async () => {
 
     try {
       await initReservationConsumer();
-      console.log("✅ RabbitMQ reservation consumer initialized");
     } catch (error: any) {
-      console.warn("⚠️ RabbitMQ worker initialization skipped (running without queue consumer):", error.message);
+      console.warn(
+        "⚠️ RabbitMQ worker initialization skipped (running without queue consumer):",
+        error.message,
+      );
     }
   } catch (error) {
     console.log(error, "Error while bootstrapping server");
@@ -26,6 +28,5 @@ const bootStrap = async () => {
     process.exit(1);
   }
 };
-
 
 bootStrap();

@@ -41,14 +41,6 @@ export const receiveFromQueue = async (
         }
       }
     });
-
-    channel.once("close", (err) => {
-      if (err) console.warn(err.message);
-      setTimeout(
-        () => receiveFromQueue(queue, exchange, routingKey, onMessage),
-        5000,
-      );
-    });
   } catch (error: any) {
     console.warn(error);
   }

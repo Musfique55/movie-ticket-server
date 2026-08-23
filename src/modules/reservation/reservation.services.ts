@@ -123,6 +123,9 @@ const confirmReservation = async (data: confirmReservationDTO) => {
     const result = await prisma.$transaction(async (tx) => {
       const reservation = await tx.reservation.findUnique({
         where: { id: data.reservationId },
+        include: {
+          user: { select: { name: true } },
+        },
       });
 
       if (!reservation) {
@@ -147,6 +150,8 @@ const confirmReservation = async (data: confirmReservationDTO) => {
           showTimeId: true,
           seat: {
             select: {
+              row: true,
+              number: true,
               type: true,
               basePrice: true,
             },
@@ -196,7 +201,18 @@ const confirmReservation = async (data: confirmReservationDTO) => {
       );
 
       await redisClient.del(lockKeys);
-      return updatedReservation;
+
+      return {
+        reservation: updatedReservation,
+        userName: reservation.user.name,
+        discount: reservation.discount,
+        tickets: showSeats.map((s) => ({
+          seatRow: s.seat.row,
+          seatNumber: s.seat.number,
+          seatType: s.seat.type,
+          price: s.seat.basePrice,
+        })),
+      };
     });
 
     return result;

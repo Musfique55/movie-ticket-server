@@ -7,6 +7,7 @@ const envs = [
   // "REDIS_HOST",
   // "REDIS_PORT",
   "RABBITMQ_URL",
+  "JWT_SECRET",
 ];
 
 const loadEnvs = () => {
@@ -24,6 +25,7 @@ const loadEnvs = () => {
     // redisHost: string;
     // redisPort: string;
     rabbitmqUrl: string;
+    jwtSecret: string;
   } = {
     port: process.env.PORT!,
     databaseUrl: process.env.DATABASE_URL!,
@@ -32,6 +34,7 @@ const loadEnvs = () => {
     // redisHost: process.env.REDIS_HOST!,
     // redisPort: process.env.REDIS_PORT!,
     rabbitmqUrl: process.env.RABBITMQ_URL!,
+    jwtSecret: process.env.JWT_SECRET!,
   };
 
   return value;
