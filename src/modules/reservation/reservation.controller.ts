@@ -2,6 +2,7 @@ import { catchAsync } from "@/helper/catchAsync";
 import { NextFunction, Request, Response } from "express";
 import { ReservationServices } from "./reservation.services";
 import { sendResponse } from "@/helper/sendResponse";
+import { generateTicketPDF } from "@/helper/generateTicketPDF";
 
 const createReservation = catchAsync(async (req: Request, res: Response) => {
   const result = await ReservationServices.createReservation(req.body);
@@ -20,6 +21,16 @@ const confirmReservation = catchAsync(async (req: Request, res: Response) => {
     success: true,
     message: "Reservation confirmed successfully",
     data: result,
+  });
+  await generateTicketPDF({
+    reservationId: result.reservation.id,
+    userName: result.userName,
+    totalAmount: result.reservation.totalAmount,
+    discount: result.reservation.discount,
+    confirmedAt: result.reservation.updatedAt,
+    tickets: result.tickets,
+  }).catch((err) => {
+    console.error("Failed to generate ticket PDF:", err);
   });
 });
 

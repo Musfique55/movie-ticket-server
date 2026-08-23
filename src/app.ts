@@ -5,7 +5,6 @@ import helmet from "helmet";
 import morgan from "morgan";
 import { routes } from "./routes";
 import { globalErrorHandler } from "@/middleware/globalErrorHandler";
-import "@/events/onKeyExpire";
 
 const app = express();
 

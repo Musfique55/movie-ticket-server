@@ -4,6 +4,7 @@ import { Redis } from "ioredis";
 
 const redisClient = new Redis(envVars.redisUrl);
 const CHANNEL_KEY = "__keyevent@0__:expired";
+
 const expiredSeatsBuffer = new Map<string, Set<string>>();
 let batchTimer: NodeJS.Timeout | null = null;
 const BATCH_DELAY_MS = 100;
@@ -32,6 +33,15 @@ redisClient.on("message", async (ch, message) => {
 
     if (batchTimer) clearTimeout(batchTimer);
     batchTimer = setTimeout(flushBuffer, BATCH_DELAY_MS);
+  }
+
+  if (ch === CHANNEL_KEY && message.startsWith("lock:reservation")) {
+    const parts = message.split(":");
+    const reservationId = parts[2] as string;
+
+    if (reservationId) {
+      await ReservationServices.cancelExpiredReservation(reservationId);
+    }
   }
 });
 

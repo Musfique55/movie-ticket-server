@@ -1,0 +1,75 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database Service
+  postgres:
+    image: postgres:16-alpine
+    container_name: ticket_booking_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: "12345"
+      POSTGRES_DB: ticket-booking
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ticket-booking"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    restart: on-failure
+    environment:
+       PGADMIN_DEFAULT_EMAIL: "admin@admin.com"
+       PGADMIN_DEFAULT_PASSWORD: "12345"
+       PGADMIN_LISTEN_PORT: 80
+       PGADMIN_DISABLE_POSTFIX: "true"
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+
+  # Redis Cache & Pub/Sub Service
+  redis:
+    image: redis/redis-stack:latest
+    container_name: ticket_booking_redis
+    restart: always
+    ports:
+      - "6379:6379"
+      - "8001:8001"
+    volumes:
+      - redis:/var/lib/redis-stack
+    environment:
+      - REDIS_ARGS=--save 900 1
+
+
+  # RabbitMQ Message Broker Service (with Management UI)
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: ticket_booking_rabbitmq
+    restart: always
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - "5672:5672"    # AMQP protocol port
+      - "15672:15672"  # Management Web UI port
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres:
+  redis:
+  rabbitmq_data:
+  pgadmin_data:
+  redisinsight:

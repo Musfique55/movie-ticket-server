@@ -6,6 +6,7 @@ import {
 } from "./reservation.schema";
 import AppError from "@/helper/AppError";
 import redisClient from "@/config/redis";
+import { sendToQueue } from "@/lib/queue";
 
 const createReservation = async (data: CreateReservationDTO) => {
   const HOLD_DURATION_MINUTES = 10;
@@ -34,7 +35,7 @@ const createReservation = async (data: CreateReservationDTO) => {
 
     if (!result) {
       if (acquiredLocks.length > 0) {
-        await redisClient.del(acquiredLocks);
+        await redisClient.del(...acquiredLocks);
       }
       throw new AppError(
         "One or more selected seats are currently locked",
@@ -97,12 +98,22 @@ const createReservation = async (data: CreateReservationDTO) => {
       { maxWait: 10000 },
     );
 
+    // Publish event to RabbitMQ
+    await sendToQueue(
+      "reservation_queue",
+      "reservation_exchange",
+      JSON.stringify({ reservationId: reservation.reservationId, expiresAt }),
+    );
+
     return {
       reservation,
       seatIds,
       showTimeId,
     };
   } catch (error) {
+    if (acquiredLocks.length > 0) {
+      await redisClient.del(...acquiredLocks);
+    }
     throw error;
   }
 };
@@ -112,6 +123,9 @@ const confirmReservation = async (data: confirmReservationDTO) => {
     const result = await prisma.$transaction(async (tx) => {
       const reservation = await tx.reservation.findUnique({
         where: { id: data.reservationId },
+        include: {
+          user: { select: { name: true } },
+        },
       });
 
       if (!reservation) {
@@ -136,6 +150,8 @@ const confirmReservation = async (data: confirmReservationDTO) => {
           showTimeId: true,
           seat: {
             select: {
+              row: true,
+              number: true,
               type: true,
               basePrice: true,
             },
@@ -185,7 +201,18 @@ const confirmReservation = async (data: confirmReservationDTO) => {
       );
 
       await redisClient.del(lockKeys);
-      return updatedReservation;
+
+      return {
+        reservation: updatedReservation,
+        userName: reservation.user.name,
+        discount: reservation.discount,
+        tickets: showSeats.map((s) => ({
+          seatRow: s.seat.row,
+          seatNumber: s.seat.number,
+          seatType: s.seat.type,
+          price: s.seat.basePrice,
+        })),
+      };
     });
 
     return result;
@@ -207,8 +234,26 @@ const unlockSeat = async (seatIds: string[], showTimeId: string) => {
   });
 };
 
+const cancelExpiredReservation = async (reservationId: string) => {
+  try {
+    const result = await prisma.reservation.update({
+      where: {
+        id: reservationId,
+      },
+      data: {
+        status: ReservationStatus.CANCELLED,
+      },
+    });
+
+    return result;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const ReservationServices = {
   createReservation,
   confirmReservation,
   unlockSeat,
+  cancelExpiredReservation,
 };
