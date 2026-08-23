@@ -129,3 +129,19 @@ model Ticket {
   @@index([id, reservationId, showSeatId])
   @@map("ticket")
 }
+
+model Payment {
+  id            String  @id @default(cuid())
+  userId        String
+  name          String
+  email         String
+  amount        Float
+  stripeEventId String? @unique
+  transactionId String? @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([id, userId, email])
+  @@map("payment")
+}
