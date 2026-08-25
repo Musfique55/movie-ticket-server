@@ -4,7 +4,7 @@ interface DataType<T> {
   success: boolean;
   statusCode: number;
   message: string;
-  data: T;
+  data?: T;
 }
 
 export const sendResponse = <T>(res: Response, obj: DataType<T>) => {

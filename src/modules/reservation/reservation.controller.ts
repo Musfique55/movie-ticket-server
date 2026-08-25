@@ -23,24 +23,25 @@ const confirmReservation = catchAsync(async (req: Request, res: Response) => {
     message: "Reservation confirmed successfully",
     data: result,
   });
-  const ticket = await generateTicketPDF({
-    reservationId: result.reservation.id,
-    userName: result.userName,
-    totalAmount: result.reservation.totalAmount,
-    discount: result.reservation.discount,
-    confirmedAt: result.reservation.updatedAt,
-    tickets: result.tickets,
-  }).catch((err) => {
-    console.error("Failed to generate ticket PDF:", err);
-  });
 
-  await sendEmail({
-    to: req.body.email,
-    subject: "Ticket",
-    attachment: ticket!,
-  }).catch((err) => {
-    console.error("Failed to send email:", err);
-  });
+  // await generateTicketPDF({
+  //   reservationId: result.reservation.id,
+  //   userName: result.userName,
+  //   totalAmount: result.reservation.totalAmount,
+  //   discount: result.reservation.discount,
+  //   confirmedAt: result.reservation.updatedAt,
+  //   tickets: result.tickets,
+  // }).catch((err) => {
+  //   console.error("Failed to generate ticket PDF:", err);
+  // });
+
+  // await sendEmail({
+  //   to: req.body.email,
+  //   subject: "Ticket",
+  //   attachment: ticket!,
+  // }).catch((err) => {
+  //   console.error("Failed to send email:", err);
+  // });
 });
 
 export const ReservationController = {

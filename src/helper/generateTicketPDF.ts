@@ -16,7 +16,7 @@ interface TicketPDFData {
   userName: string;
   totalAmount: number;
   discount: number | null;
-  confirmedAt: Date;
+  confirmedAt: Date | string;
   tickets: TicketItem[];
 }
 
@@ -37,6 +37,8 @@ export const generateTicketPDF = async (
     width: 120,
     margin: 1,
   });
+
+  const confirmedDate = new Date(data.confirmedAt);
 
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ size: "A4", margin: 50 });
@@ -76,8 +78,8 @@ export const generateTicketPDF = async (
     doc.fontSize(10).font("Helvetica");
     doc.text(`Reservation ID: ${data.reservationId}`);
     doc.text(`Customer: ${data.userName}`);
-    doc.text(`Date: ${data.confirmedAt.toLocaleDateString()}`);
-    doc.text(`Time: ${data.confirmedAt.toLocaleTimeString()}`);
+    doc.text(`Date: ${confirmedDate.toLocaleDateString()}`);
+    doc.text(`Time: ${confirmedDate.toLocaleTimeString()}`);
 
     doc.moveDown(1);
 
