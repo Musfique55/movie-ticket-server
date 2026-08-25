@@ -5,6 +5,7 @@ import helmet from "helmet";
 import morgan from "morgan";
 import { routes } from "./routes";
 import { globalErrorHandler } from "@/middleware/globalErrorHandler";
+import { notFound } from "./middleware/notFound";
 
 const app = express();
 
@@ -23,6 +24,7 @@ app.get("/health", (req, res) => {
 
 app.use("/api/v1", routes);
 
+app.use(notFound);
 app.use(globalErrorHandler);
 
 export default app;

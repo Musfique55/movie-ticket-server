@@ -215,6 +215,22 @@ const confirmReservation = async (data: confirmReservationDTO) => {
       };
     });
 
+    const pdfData = {
+      reservationId: result.reservation.id,
+      userName: result.userName,
+      email: data.email,
+      totalAmount: Number(result.reservation.totalAmount),
+      discount: Number(result.reservation.discount),
+      confirmedAt: result.reservation.updatedAt,
+      tickets: result.tickets,
+    };
+
+    await sendToQueue(
+      "ticket_booking_confirmation_email_queue",
+      "ticket_booking_confirmation_email_exchange",
+      JSON.stringify(pdfData),
+    );
+
     return result;
   } catch (error) {
     throw error;
