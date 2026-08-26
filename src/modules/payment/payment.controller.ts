@@ -7,22 +7,23 @@ import AppError from "@/helper/AppError";
 import { paymentServices } from "./payment.services";
 import { sendResponse } from "@/helper/sendResponse";
 
-const createCheckoutSession = catchAsync(async (req: Request, res: Response) => {
-  const result = await paymentServices.createCheckoutSession(req.body);
-  sendResponse(res, {
-    statusCode: 200,
-    success: true,
-    message: "Checkout session created successfully",
-    data: result,
-  });
-});
+const createCheckoutSession = catchAsync(
+  async (req: Request, res: Response) => {
+    const result = await paymentServices.createCheckoutSession(req.body);
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: "Checkout session created successfully",
+      data: result,
+    });
+  },
+);
 
 const stripeWebhook = catchAsync(async (req: Request, res: Response) => {
   const signature = req.headers["stripe-signature"] as string;
   if (!signature) {
     throw new AppError("Signature is required", 400);
   }
-  console.log("signature", signature);
   let event: Stripe.Event;
   try {
     event = stripe.webhooks.constructEvent(

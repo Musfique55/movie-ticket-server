@@ -3,6 +3,8 @@ import { envVars } from "@/config/envVars";
 import { prisma } from "@/lib/prisma";
 import "@/events/onKeyExpire";
 import "@/modules/reservation/reservation.consumer";
+import "@/modules/payment/payment.consumer";
+
 const PORT = envVars.port || 4000;
 
 const bootStrap = async () => {

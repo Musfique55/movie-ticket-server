@@ -269,6 +269,41 @@ const processPaymentSuccess = async (
   }
 };
 
+const handlePaymentFulfillment = async (
+  eventId: string,
+  session: Stripe.Checkout.Session,
+) => {
+  const existing = await prisma.payment.findUnique({
+    where: {
+      stripeEventId: eventId,
+    },
+  });
+
+  if (existing) {
+    return;
+  }
+
+  const data = session.metadata as unknown as {
+    reservationId: string;
+    seatIds: string[];
+    userId: string;
+    email: string;
+    name: string;
+  };
+
+  if (data?.reservationId) {
+    await processPaymentSuccess(
+      eventId,
+      data,
+      (session.amount_total || 0) / 100,
+      (session.payment_intent as string) || session.id,
+      session as any,
+      session.url || null,
+      session.payment_intent as string,
+    );
+  }
+};
+
 const stripeWebhook = async (event: Stripe.Event) => {
   try {
     const existing = await prisma.payment.findUnique({
@@ -284,25 +319,15 @@ const stripeWebhook = async (event: Stripe.Event) => {
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
-        const data = session.metadata as unknown as {
-          reservationId: string;
-          seatIds: string[];
-          userId: string;
-          email: string;
-          name: string;
-        };
-
-        if (data?.reservationId) {
-          await processPaymentSuccess(
-            event.id,
-            data,
-            (session.amount_total || 0) / 100,
-            (session.payment_intent as string) || session.id,
-            session as any,
-            session.url || null,
-            session.payment_intent as string,
-          );
-        }
+        // Delegate payment fulfillment task asynchronously to RabbitMQ queue worker
+        await sendToQueue(
+          "payment_fulfillment_queue",
+          "payment_fulfillment_exchange",
+          JSON.stringify({
+            eventId: event.id,
+            session,
+          }),
+        );
         break;
       }
       case "checkout.session.expired": {
@@ -320,5 +345,6 @@ const stripeWebhook = async (event: Stripe.Event) => {
 
 export const paymentServices = {
   createCheckoutSession,
+  handlePaymentFulfillment,
   stripeWebhook,
 };
