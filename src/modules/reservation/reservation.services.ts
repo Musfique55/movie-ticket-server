@@ -7,6 +7,8 @@ import {
 import AppError from "@/helper/AppError";
 import redisClient from "@/config/redis";
 import { sendToQueue } from "@/lib/queue";
+import { stripe } from "@/config/stripe";
+import { envVars } from "@/config/envVars";
 
 const createReservation = async (data: CreateReservationDTO) => {
   const HOLD_DURATION_MINUTES = 10;
@@ -118,125 +120,6 @@ const createReservation = async (data: CreateReservationDTO) => {
   }
 };
 
-const confirmReservation = async (data: confirmReservationDTO) => {
-  try {
-    const result = await prisma.$transaction(async (tx) => {
-      const reservation = await tx.reservation.findUnique({
-        where: { id: data.reservationId },
-        include: {
-          user: { select: { name: true } },
-        },
-      });
-
-      if (!reservation) {
-        throw new AppError("Reservation not found", 404);
-      }
-
-      if (reservation.status !== "PENDING") {
-        throw new AppError("Reservation is not in pending state", 400);
-      }
-
-      if (reservation.expiresAt && reservation.expiresAt < new Date()) {
-        throw new AppError("Reservation has expired", 400);
-      }
-
-      const showSeats = await tx.showSeat.findMany({
-        where: {
-          id: { in: data.seatIds },
-          status: ShowSeatStatus.LOCKED,
-        },
-        select: {
-          id: true,
-          showTimeId: true,
-          seat: {
-            select: {
-              row: true,
-              number: true,
-              type: true,
-              basePrice: true,
-            },
-          },
-        },
-      });
-
-      if (showSeats.length !== data.seatIds.length) {
-        throw new AppError(
-          "One or more selected seats are no longer locked or available",
-          400,
-        );
-      }
-
-      const showTimeId = showSeats[0]!.showTimeId;
-
-      const updatedReservation = await tx.reservation.update({
-        where: {
-          id: data.reservationId,
-        },
-        data: { status: ReservationStatus.CONFIRMED },
-      });
-
-      await tx.showSeat.updateMany({
-        where: {
-          id: { in: data.seatIds },
-          status: ShowSeatStatus.LOCKED,
-          showTimeId,
-        },
-        data: {
-          status: ShowSeatStatus.BOOKED,
-        },
-      });
-
-      const tickets = showSeats.map((s) => ({
-        reservationId: data.reservationId,
-        showSeatId: s.id,
-        price: s.seat.basePrice,
-      }));
-
-      await tx.ticket.createMany({
-        data: tickets,
-      });
-
-      const lockKeys = data.seatIds.map(
-        (id) => `lock:showSeat:${showTimeId}:seat:${id}`,
-      );
-
-      await redisClient.del(lockKeys);
-
-      return {
-        reservation: updatedReservation,
-        userName: reservation.user.name,
-        discount: reservation.discount,
-        tickets: showSeats.map((s) => ({
-          seatRow: s.seat.row,
-          seatNumber: s.seat.number,
-          seatType: s.seat.type,
-          price: s.seat.basePrice,
-        })),
-      };
-    });
-
-    const pdfData = {
-      reservationId: result.reservation.id,
-      userName: result.userName,
-      email: data.email,
-      totalAmount: Number(result.reservation.totalAmount),
-      discount: Number(result.reservation.discount),
-      confirmedAt: result.reservation.updatedAt,
-      tickets: result.tickets,
-    };
-
-    await sendToQueue(
-      "ticket_booking_confirmation_email_queue",
-      "ticket_booking_confirmation_email_exchange",
-      JSON.stringify(pdfData),
-    );
-
-    return result;
-  } catch (error) {
-    throw error;
-  }
-};
-
 const unlockSeat = async (seatIds: string[], showTimeId: string) => {
   await prisma.showSeat.updateMany({
     where: {
@@ -269,7 +152,6 @@ const cancelExpiredReservation = async (reservationId: string) => {
 
 export const ReservationServices = {
   createReservation,
-  confirmReservation,
   unlockSeat,
   cancelExpiredReservation,
 };

@@ -8,7 +8,7 @@ export const notFound = async (
 ) => {
   sendResponse(res, {
     message: `${req.originalUrl} not found`,
-    statusCode: res.statusCode || 404,
+    statusCode: 404,
     success: false,
   });
   next();
