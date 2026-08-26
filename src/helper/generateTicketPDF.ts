@@ -42,7 +42,6 @@ export const generateTicketPDF = async (
 
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ size: "A4", margin: 50 });
-    doc.pipe(fs.createWriteStream("output.pdf"));
 
     const chunks: Buffer[] = [];
     doc.on("data", (chunk: Buffer) => chunks.push(chunk));

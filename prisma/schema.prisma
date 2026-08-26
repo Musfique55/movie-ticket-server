@@ -24,6 +24,12 @@ enum ReservationStatus {
   PENDING
 }
 
+enum PaymentStatus {
+  PAID
+  PENDING
+  FAILED
+}
+
 enum Role {
   USER
   ADMIN
@@ -138,6 +144,11 @@ model Payment {
   amount        Float
   stripeEventId String? @unique
   transactionId String? @unique
+
+  paymentGatewayData Json?
+  invoiceUrl         String?
+
+  status PaymentStatus @default(PENDING)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
