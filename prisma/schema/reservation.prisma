@@ -1,0 +1,38 @@
+model Reservation {
+    id          String            @id @unique @default(cuid())
+    userId      String
+    user        User              @relation(fields: [userId], references: [id])
+    status      ReservationStatus @default(PENDING)
+    totalAmount Float
+    discount    Float?
+    expiresAt   DateTime?
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    tickets   Ticket[]
+
+    @@index([userId])
+    @@map("reservation")
+}
+
+model Ticket {
+    id            String @id @unique @default(cuid())
+    reservationId String
+    showSeatId    String
+    price         Float
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    reservation Reservation @relation(fields: [reservationId], references: [id])
+    showSeat    ShowSeat    @relation(fields: [showSeatId], references: [id])
+
+    @@index([reservationId, showSeatId])
+    @@map("ticket")
+}
+
+enum ReservationStatus {
+    CONFIRMED
+    CANCELLED
+    PENDING
+}

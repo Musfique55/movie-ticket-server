@@ -11,9 +11,6 @@ const initPaymentFulfillmentConsumer = async () => {
       eventId: string;
       session: Stripe.Checkout.Session;
     }) => {
-      console.log(
-        `[Payment Worker] Processing payment fulfillment for event: ${message.eventId}`,
-      );
       await paymentServices.handlePaymentFulfillment(
         message.eventId,
         message.session,

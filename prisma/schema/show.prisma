@@ -1,0 +1,60 @@
+model ShowTime {
+    id      String @id @unique @default(cuid())
+    movieId String
+    movie   Movie  @relation(fields: [movieId], references: [id], onDelete: Cascade)
+
+    hallId String
+    hall   Hall   @relation(fields: [hallId], references: [id], onDelete: Cascade)
+
+    startTime DateTime
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    showSeats ShowSeat[]
+
+    @@index([movieId, startTime])
+    @@map("showTime")
+}
+
+model Movie {
+    id       String @id @unique @default(cuid())
+    name     String
+    duration String
+
+    showTimes ShowTime[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([name])
+    @@map("movie")
+}
+
+model Hall {
+    id        String     @id @unique @default(cuid())
+    name      String
+    theatreId String
+    theatre   Theatre    @relation(fields: [theatreId], references: [id], onDelete: Cascade)
+    showTimes ShowTime[]
+    createdAt DateTime   @default(now())
+    updatedAt DateTime   @updatedAt
+
+    @@index([name, theatreId])
+    @@map("hall")
+}
+
+model Theatre {
+    id       String @id @unique @default(cuid())
+    name     String
+    location String
+    city     String
+
+    halls Hall[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([name, location, city])
+    @@map("theatre")
+}
