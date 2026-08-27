@@ -16,7 +16,7 @@ model ShowTime {
 
     showSeats ShowSeat[]
 
-    @@index([movieId, startTime])
+    @@index([movieId, hallId, theatreId, startTime])
     @@map("showTime")
 }
 
