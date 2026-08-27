@@ -9,6 +9,8 @@ export const createSeatDTO = z
       basePrice: z.number(),
       type: z.nativeEnum(SeatType),
       status: z.nativeEnum(SeatStatus).default(SeatStatus.AVAILABLE),
+      theatreId: z.string(),
+      hallId: z.string(),
     }),
   )
   .superRefine((data, ctx) => {

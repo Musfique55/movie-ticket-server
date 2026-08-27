@@ -17,6 +17,6 @@ router.use("/reservations", reservationRoutes);
 router.use("/payment", paymentRoutes);
 router.use("/movies", MovieRoutes);
 router.use("/theatres", theatreRoutes);
-router.use("halls", hallRoutes);
+router.use("/halls", hallRoutes);
 
 export const routes = router;

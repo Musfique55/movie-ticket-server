@@ -1,12 +1,13 @@
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import express from "express";
+import express, { Request, Response } from "express";
 import helmet from "helmet";
 import morgan from "morgan";
 import { routes } from "./routes";
 import { globalErrorHandler } from "@/middleware/globalErrorHandler";
 import { notFound } from "./middleware/notFound";
 import { paymentController } from "@/modules/payment/payment.controller";
+import { showTimeServices } from "./modules/showTime/showTime.services";
 
 const app = express();
 
@@ -25,6 +26,28 @@ app.post(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan("dev"));
+
+// sse for real-time seat availability
+app.get("/events/:showTimeId", async (req: Request, res: Response) => {
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+
+  res.write(`data: ${JSON.stringify({ status: "connected" })}\n\n`);
+
+  // send seat availability
+  const { showTimeId } = req.params;
+
+  const getSeatBookingEvent = await showTimeServices.getShowTimeById(
+    showTimeId as string,
+  );
+
+  res.write(`data: ${JSON.stringify(getSeatBookingEvent)}\n\n`);
+
+  req.on("close", () => {
+    console.log("Client disconnected");
+  });
+});
 
 // health check endpoint
 app.get("/health", (req, res) => {

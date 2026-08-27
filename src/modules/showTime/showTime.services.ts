@@ -49,6 +49,37 @@ const getShowTimeById = async (id: string) => {
       where: {
         id,
       },
+      select: {
+        id: true,
+        movie: {
+          select: {
+            id: true,
+            name: true,
+            duration: true,
+          },
+        },
+        hall: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        showSeats: {
+          select: {
+            id: true,
+            status: true,
+            seat: {
+              select: {
+                id: true,
+                row: true,
+                number: true,
+                type: true,
+                basePrice: true,
+              },
+            },
+          },
+        },
+      },
     });
     return result;
   } catch (error) {

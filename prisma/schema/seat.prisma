@@ -23,6 +23,12 @@ model Seat {
     type      SeatType
     status    SeatStatus @default(AVAILABLE)
 
+    theatreId String
+    theatre   Theatre @relation(fields: [theatreId], references: [id], onDelete: Cascade)
+
+    hallId String
+    hall   Hall   @relation(fields: [hallId], references: [id], onDelete: Cascade)
+
     createdAt DateTime   @default(now())
     updatedAt DateTime   @updatedAt
     showSeats ShowSeat[]

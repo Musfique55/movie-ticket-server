@@ -4,12 +4,13 @@ import { showTimeServices } from "./showTime.services";
 import { Request, Response } from "express";
 
 const createShowTime = catchAsync(async (req: Request, res: Response) => {
-  const { startTime, endTime, movieId } = req.body;
+  const { startTime, movieId, hallId, theatreId } = req.body;
 
   const result = await showTimeServices.createShowTime({
     startTime,
-    endTime,
     movieId,
+    hallId,
+    theatreId,
   });
 
   sendResponse(res, {
@@ -46,11 +47,10 @@ const getShowTimeById = catchAsync(async (req: Request, res: Response) => {
 
 const updateShowTime = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { startTime, endTime } = req.body;
+  const { startTime } = req.body;
 
   const result = await showTimeServices.updateShowTime(id as string, {
     startTime,
-    endTime,
   });
 
   sendResponse(res, {
