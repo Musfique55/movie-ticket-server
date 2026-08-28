@@ -3,6 +3,16 @@ import { createHallDTO, updateHallDTO } from "./hall.schema";
 import AppError from "@/helper/AppError";
 const createHall = async (payload: createHallDTO) => {
   try {
+    const theatre = await prisma.theatre.findUnique({
+      where: {
+        id: payload.theatreId,
+      },
+    });
+
+    if (!theatre) {
+      throw new AppError("Invalid theatre", 404);
+    }
+
     const result = await prisma.hall.create({
       data: payload,
     });

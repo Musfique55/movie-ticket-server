@@ -34,8 +34,36 @@ const deleteTheatre = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getTheatreMovies = catchAsync(async (req: Request, res: Response) => {
+  const theatreId = req.params.id as string;
+  const result = await theatreServices.getTheatreMovies(theatreId);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Fetched movie list",
+    data: result,
+  });
+});
+const getTheatreMovieDetails = catchAsync(
+  async (req: Request, res: Response) => {
+    const { id, movieId } = req.params;
+    const result = await theatreServices.getTheatreMovieDetails(
+      id as string,
+      movieId as string,
+    );
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: "Fetched movie details",
+      data: result,
+    });
+  },
+);
+
 export const theatreController = {
   createTheatre,
   updateTheatre,
   deleteTheatre,
+  getTheatreMovieDetails,
+  getTheatreMovies,
 };

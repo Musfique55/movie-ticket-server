@@ -7,10 +7,7 @@ export const requestValidator = (schema: z.ZodType) => {
     try {
       const parsedBody = schema.safeParse(req.body);
       if (!parsedBody.success) {
-        const message = parsedBody.error.issues
-          .map((issue) => issue.message)
-          .join(", ");
-        throw new AppError(message, 400);
+        next(parsedBody.error);
       }
 
       req.body = parsedBody.data;

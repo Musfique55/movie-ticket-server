@@ -16,12 +16,13 @@ model ShowSeat {
 }
 
 model Seat {
-    id        String     @id @unique @default(cuid())
-    row       String
-    number    Int
-    basePrice Float
-    type      SeatType
-    status    SeatStatus @default(AVAILABLE)
+    id             String     @id @unique @default(cuid())
+    name           String
+    rowPosition    String
+    columnPosition Int
+    basePrice      Float
+    type           SeatType
+    status         SeatStatus @default(AVAILABLE)
 
     theatreId String
     theatre   Theatre @relation(fields: [theatreId], references: [id], onDelete: Cascade)

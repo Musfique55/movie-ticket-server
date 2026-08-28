@@ -57,4 +57,63 @@ const deleteTheatre = async (id: string) => {
   }
 };
 
-export const theatreServices = { createTheatre, updateTheatre, deleteTheatre };
+const getTheatreMovies = async (theatreId: string) => {
+  try {
+    const movies = await prisma.movie.findMany({
+      where: {
+        showTimes: {
+          some: {
+            theatreId,
+          },
+        },
+      },
+    });
+
+    return movies;
+  } catch (error) {
+    throw error;
+  }
+};
+
+const getTheatreMovieDetails = async (theatreId: string, movieId: string) => {
+  try {
+    const movies = await prisma.movie.findUnique({
+      where: {
+        id: movieId,
+        showTimes: {
+          some: {
+            theatreId,
+          },
+        },
+      },
+      select: {
+        id: true,
+        name: true,
+        showTimes: {
+          select: {
+            id: true,
+            startTime: true,
+            hall: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return movies;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const theatreServices = {
+  createTheatre,
+  updateTheatre,
+  deleteTheatre,
+  getTheatreMovies,
+  getTheatreMovieDetails,
+};

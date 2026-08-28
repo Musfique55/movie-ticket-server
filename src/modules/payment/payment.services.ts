@@ -11,9 +11,11 @@ import { prisma } from "@/lib/prisma";
 import { sendToQueue } from "@/lib/queue";
 import Stripe from "stripe";
 import { CreateCheckoutSessionDTO } from "./payment.schema";
+import { showTimeServices } from "../showTime/showTime.services";
+import { seatEmitter } from "@/lib/seatEmitter";
 
 const createCheckoutSession = async (payload: CreateCheckoutSessionDTO) => {
-  const { reservationId, seatIds, email } = payload;
+  const { reservationId, seatIds, email, showTimeId } = payload;
 
   const reservation = await prisma.reservation.findUnique({
     where: { id: reservationId },
@@ -44,8 +46,8 @@ const createCheckoutSession = async (payload: CreateCheckoutSessionDTO) => {
       showTimeId: true,
       seat: {
         select: {
-          row: true,
-          number: true,
+          rowPosition: true,
+          columnPosition: true,
           type: true,
           basePrice: true,
         },
@@ -65,7 +67,7 @@ const createCheckoutSession = async (payload: CreateCheckoutSessionDTO) => {
       price_data: {
         currency: "usd",
         product_data: {
-          name: `Ticket - Row ${s.seat.row}, Seat ${s.seat.number} (${s.seat.type})`,
+          name: `Ticket - Row ${s.seat.rowPosition}, Seat ${s.seat.columnPosition} (${s.seat.type})`,
           description: `ShowTime ID: ${s.showTimeId}`,
         },
         unit_amount: Math.round(s.seat.basePrice * 100),
@@ -86,6 +88,7 @@ const createCheckoutSession = async (payload: CreateCheckoutSessionDTO) => {
       userId: reservation.userId,
       email: email || reservation.user.email,
       name: reservation.user.name,
+      showTimeId,
     },
   });
 
@@ -103,6 +106,7 @@ const processPaymentSuccess = async (
     userId: string;
     email: string;
     name: string;
+    showTimeId: string;
   },
   amount: number,
   transactionId: string,
@@ -143,8 +147,8 @@ const processPaymentSuccess = async (
           showTimeId: true,
           seat: {
             select: {
-              row: true,
-              number: true,
+              rowPosition: true,
+              columnPosition: true,
               type: true,
               basePrice: true,
             },
@@ -211,13 +215,18 @@ const processPaymentSuccess = async (
         userName: reservation.user.name,
         discount: reservation.discount,
         tickets: showSeats.map((s) => ({
-          seatRow: s.seat.row,
-          seatNumber: s.seat.number,
+          rowPosition: s.seat.rowPosition,
+          columnPosition: s.seat.columnPosition,
           seatType: s.seat.type,
           price: s.seat.basePrice,
         })),
       };
     });
+
+    const updatedShowTime = await showTimeServices.getShowTimeById(
+      data.showTimeId,
+    );
+    seatEmitter.emit(`seatUpdate:${data.showTimeId}`, updatedShowTime);
 
     const pdfData = {
       reservationId: result.reservation.id,
@@ -289,6 +298,7 @@ const handlePaymentFulfillment = async (
     userId: string;
     email: string;
     name: string;
+    showTimeId: string;
   };
 
   if (data?.reservationId) {

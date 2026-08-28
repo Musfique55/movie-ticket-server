@@ -17,6 +17,9 @@ router.patch(
   theatreController.updateTheatre,
 );
 
+router.get("/:id/movies", theatreController.getTheatreMovies);
+router.get("/:id/movies/:movieId", theatreController.getTheatreMovieDetails);
+
 router.delete("/:id", theatreController.deleteTheatre);
 
 export const theatreRoutes = router;

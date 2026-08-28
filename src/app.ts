@@ -8,6 +8,7 @@ import { globalErrorHandler } from "@/middleware/globalErrorHandler";
 import { notFound } from "./middleware/notFound";
 import { paymentController } from "@/modules/payment/payment.controller";
 import { showTimeServices } from "./modules/showTime/showTime.services";
+import { seatEmitter } from "./lib/seatEmitter";
 
 const app = express();
 
@@ -38,14 +39,20 @@ app.get("/events/:showTimeId", async (req: Request, res: Response) => {
   // send seat availability
   const { showTimeId } = req.params;
 
-  const getSeatBookingEvent = await showTimeServices.getShowTimeById(
+  const initialData = await showTimeServices.getShowTimeById(
     showTimeId as string,
   );
 
-  res.write(`data: ${JSON.stringify(getSeatBookingEvent)}\n\n`);
+  res.write(`data: ${JSON.stringify(initialData)}\n\n`);
+
+  const onSeatUpdate = (data: any) => {
+    res.write(`data: ${JSON.stringify(data)}\n\n`);
+  };
+
+  seatEmitter.on(`seatUpdate:${showTimeId}`, onSeatUpdate);
 
   req.on("close", () => {
-    console.log("Client disconnected");
+    seatEmitter.off(`seatUpdate:${showTimeId}`, onSeatUpdate);
   });
 });
 
