@@ -70,7 +70,7 @@ const createCheckoutSession = async (payload: CreateCheckoutSessionDTO) => {
           name: `Ticket - Row ${s.seat.rowPosition}, Seat ${s.seat.columnPosition} (${s.seat.type})`,
           description: `ShowTime ID: ${s.showTimeId}`,
         },
-        unit_amount: s.seat.basePrice,
+        unit_amount: Math.round(s.seat.basePrice * 100),
       },
       quantity: 1,
     }));
