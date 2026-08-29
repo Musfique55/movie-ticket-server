@@ -15,8 +15,6 @@ const createReservation = catchAsync(async (req: Request, res: Response) => {
     data: result,
   });
 
-  console.log("after res");
-
   // Publish event to RabbitMQ
   await sendToQueue(
     "reservation_queue",

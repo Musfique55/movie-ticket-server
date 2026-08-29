@@ -65,12 +65,12 @@ const createCheckoutSession = async (payload: CreateCheckoutSessionDTO) => {
   const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] =
     showSeats.map((s) => ({
       price_data: {
-        currency: "usd",
+        currency: "bdt",
         product_data: {
           name: `Ticket - Row ${s.seat.rowPosition}, Seat ${s.seat.columnPosition} (${s.seat.type})`,
           description: `ShowTime ID: ${s.showTimeId}`,
         },
-        unit_amount: Math.round(s.seat.basePrice * 100),
+        unit_amount: s.seat.basePrice,
       },
       quantity: 1,
     }));
@@ -147,6 +147,7 @@ const processPaymentSuccess = async (
           showTimeId: true,
           seat: {
             select: {
+              name: true,
               rowPosition: true,
               columnPosition: true,
               type: true,
@@ -215,6 +216,7 @@ const processPaymentSuccess = async (
         userName: reservation.user.name,
         discount: reservation.discount,
         tickets: showSeats.map((s) => ({
+          name: s.seat.name,
           rowPosition: s.seat.rowPosition,
           columnPosition: s.seat.columnPosition,
           seatType: s.seat.type,
@@ -252,26 +254,34 @@ const processPaymentSuccess = async (
       console.log(
         `Reservation ${data.reservationId} expired/unavailable. Issuing full refund for paymentIntent: ${paymentIntentId}`,
       );
-      await stripe.refunds.create({
-        payment_intent: paymentIntentId,
-      });
-
-      await prisma.payment.create({
-        data: {
-          amount,
-          transactionId,
-          status: PaymentStatus.FAILED,
-          stripeEventId,
-          name: data.name,
-          userId: data.userId,
-          email: data.email,
-          paymentGatewayData: {
-            ...gatewayData,
-            refundReason: error.message,
+      await Promise.all([
+        stripe.refunds.create({
+          payment_intent: paymentIntentId,
+        }),
+        prisma.payment.upsert({
+          where: {
+            stripeEventId,
           },
-          invoiceUrl,
-        },
-      });
+          update: {
+            status: PaymentStatus.FAILED,
+          },
+          create: {
+            amount,
+            transactionId,
+            status: PaymentStatus.FAILED,
+            stripeEventId,
+            name: data.name,
+            userId: data.userId,
+            email: data.email,
+            paymentGatewayData: {
+              ...gatewayData,
+              refundReason: error.message,
+            },
+            invoiceUrl,
+          },
+        }),
+      ]);
+
       return;
     }
     throw error;
@@ -342,7 +352,12 @@ const stripeWebhook = async (event: Stripe.Event) => {
       }
       case "checkout.session.expired": {
         const session = event.data.object as Stripe.Checkout.Session;
-        console.log("checkout.session.expired", session);
+        break;
+      }
+      case "checkout.session.async_payment_succeeded": {
+        break;
+      }
+      case "charge.updated": {
         break;
       }
       default:

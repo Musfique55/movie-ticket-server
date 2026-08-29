@@ -5,8 +5,9 @@ import jwt from "jsonwebtoken";
 import { envVars } from "@/config/envVars";
 
 interface TicketItem {
-  seatRow: string;
-  seatNumber: number;
+  name: string;
+  rowPosition: string;
+  columnPosition: number;
   seatType: string;
   price: number;
 }
@@ -42,6 +43,8 @@ export const generateTicketPDF = async (
 
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ size: "A4", margin: 50 });
+
+    doc.pipe(fs.createWriteStream("outline.pdf", "utf8"));
 
     const chunks: Buffer[] = [];
     doc.on("data", (chunk: Buffer) => chunks.push(chunk));
@@ -113,7 +116,11 @@ export const generateTicketPDF = async (
 
     data.tickets.forEach((ticket, index) => {
       doc.text(`${index + 1}`, col1, rowY);
-      doc.text(`${ticket.seatRow}${ticket.seatNumber}`, col2, rowY);
+      doc.text(
+        `${ticket.name} (Row ${ticket.rowPosition}, Seat ${ticket.columnPosition})`,
+        col2,
+        rowY,
+      );
       doc.text(ticket.seatType, col3, rowY);
       doc.text(`$${ticket.price.toFixed(2)}`, col4, rowY);
       rowY += 20;

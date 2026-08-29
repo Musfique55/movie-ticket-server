@@ -24,6 +24,7 @@ const stripeWebhook = catchAsync(async (req: Request, res: Response) => {
   if (!signature) {
     throw new AppError("Signature is required", 400);
   }
+
   let event: Stripe.Event;
   try {
     event = stripe.webhooks.constructEvent(

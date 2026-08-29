@@ -33,8 +33,9 @@ const initTicketBookingConfirmationPdfConsumer = async () => {
       discount: number;
       confirmedAt: Date | string;
       tickets: {
-        seatRow: string;
-        seatNumber: number;
+        name: string;
+        rowPosition: string;
+        columnPosition: number;
         seatType: string;
         price: number;
       }[];
