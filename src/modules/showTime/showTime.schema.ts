@@ -4,11 +4,11 @@ export const createShowTimeDTO = z.object({
   movieId: z.string(),
   startTime: z.coerce.date(),
   hallId: z.string(),
+  theatreId: z.string(),
 });
 
 export const updateShowTimeDTO = z.object({
-  startTime: z.coerce.date().optional(),
-  hallId: z.string().optional(),
+  startTime: z.coerce.date(),
 });
 
 export type ShowTimeDTO = z.infer<typeof createShowTimeDTO>;

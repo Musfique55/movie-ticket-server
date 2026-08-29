@@ -1,31 +1,73 @@
 import { prisma } from "@/lib/prisma";
 import { ShowTimeDTO, UpdateShowTimeDTO } from "./showTime.schema";
 import { SeatStatus, ShowSeatStatus } from "@/generated/prisma/client";
+import AppError from "@/helper/AppError";
 
 const createShowTime = async (data: ShowTimeDTO) => {
   try {
-    //create showtime
-    const result = await prisma.showTime.create({
-      data,
-    });
-
-    // fetch all physical seats
-    const seats = await prisma.seat.findMany({
+    // check theatre
+    const theatre = await prisma.theatre.findUnique({
       where: {
-        status: SeatStatus.AVAILABLE,
+        id: data.theatreId,
+      },
+      select: {
+        id: true,
+        halls: {
+          select: {
+            id: true,
+          },
+          where: {
+            id: data.hallId,
+          },
+        },
       },
     });
 
-    // show seat payload
-    const showSeats = seats.map((seat) => ({
-      seatId: seat.id,
-      showTimeId: result.id,
-      status: ShowSeatStatus.AVAILABLE,
-    }));
+    if (!theatre || theatre.halls.length === 0) {
+      throw new AppError("Invalid theatre or hall", 400);
+    }
 
-    // create bulk show seat
-    await prisma.showSeat.createMany({
-      data: showSeats,
+    //check movie
+    const movie = await prisma.movie.findUnique({
+      where: {
+        id: data.movieId,
+      },
+    });
+
+    if (!movie) {
+      throw new AppError("Movie not found", 404);
+    }
+
+    const result = await prisma.$transaction(async (tx) => {
+      //create showtime
+      const showtime = await tx.showTime.create({
+        data,
+      });
+
+      // fetch all physical seats
+      const seats = await tx.seat.findMany({
+        where: {
+          hallId: data.hallId,
+          theatreId: data.theatreId,
+          status: SeatStatus.AVAILABLE,
+        },
+      });
+
+      // show seat payload
+      const showSeats = seats.map((seat) => ({
+        seatId: seat.id,
+        showTimeId: showtime.id,
+        status: ShowSeatStatus.AVAILABLE,
+      }));
+
+      // create bulk show seat
+      if (showSeats.length > 0) {
+        await tx.showSeat.createMany({
+          data: showSeats,
+        });
+      }
+
+      return showtime;
     });
 
     return result;
@@ -48,6 +90,36 @@ const getShowTimeById = async (id: string) => {
     const result = await prisma.showTime.findUnique({
       where: {
         id,
+      },
+      select: {
+        id: true,
+        movie: {
+          select: {
+            id: true,
+            name: true,
+            duration: true,
+          },
+        },
+        hall: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        showSeats: {
+          select: {
+            id: true,
+            status: true,
+            seat: {
+              select: {
+                rowPosition: true,
+                columnPosition: true,
+                type: true,
+                basePrice: true,
+              },
+            },
+          },
+        },
       },
     });
     return result;

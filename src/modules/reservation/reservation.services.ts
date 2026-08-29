@@ -1,14 +1,10 @@
 import { ReservationStatus, ShowSeatStatus } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
-import {
-  confirmReservationDTO,
-  CreateReservationDTO,
-} from "./reservation.schema";
+import { CreateReservationDTO } from "./reservation.schema";
 import AppError from "@/helper/AppError";
 import redisClient from "@/config/redis";
-import { sendToQueue } from "@/lib/queue";
-import { stripe } from "@/config/stripe";
-import { envVars } from "@/config/envVars";
+import { seatEmitter } from "@/lib/seatEmitter";
+import { showTimeServices } from "../showTime/showTime.services";
 
 const createReservation = async (data: CreateReservationDTO) => {
   const HOLD_DURATION_MINUTES = 10;
@@ -100,12 +96,9 @@ const createReservation = async (data: CreateReservationDTO) => {
       { maxWait: 10000 },
     );
 
-    // Publish event to RabbitMQ
-    await sendToQueue(
-      "reservation_queue",
-      "reservation_exchange",
-      JSON.stringify({ reservationId: reservation.reservationId, expiresAt }),
-    );
+    // emit event for seat availability
+    const updatedShowTime = await showTimeServices.getShowTimeById(showTimeId);
+    seatEmitter.emit(`seatUpdate:${showTimeId}`, updatedShowTime);
 
     return {
       reservation,
@@ -131,6 +124,9 @@ const unlockSeat = async (seatIds: string[], showTimeId: string) => {
       status: ShowSeatStatus.AVAILABLE,
     },
   });
+
+  const updatedShowTime = await showTimeServices.getShowTimeById(showTimeId);
+  seatEmitter.emit(`seatUpdate:${showTimeId}`, updatedShowTime);
 };
 
 const cancelExpiredReservation = async (reservationId: string) => {
