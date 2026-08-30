@@ -6,14 +6,6 @@ import redisClient from "@/config/redis";
 import { seatEmitter } from "@/lib/seatEmitter";
 import { showTimeServices } from "../showTime/showTime.services";
 
-//   // 1. Lock execution
-//   const lockAcquired = await redisClient.eval(...);
-
-//   // 2. DB Transaction
-//   const reservation = await prisma.$transaction(...);
-
-//   return { reservation, seatIds, showTimeId };
-
 const LUA_SCRIPT = `
   for i = 1, #KEYS do
     if redis.call('EXISTS', KEYS[i]) == 1 then

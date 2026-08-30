@@ -1,45 +1,58 @@
 import { prisma } from "@/lib/prisma";
-import { CreateUserDTO } from "./user.schema";
-import bcrypt from "bcryptjs";
-import { Role } from "@/generated/prisma/client";
 
-const userServices = async (data: CreateUserDTO) => {
+const getUsers = async () => {
   try {
-    const isUser = await prisma.user.findUnique({
-      where: {
-        email: data.email,
+    const users = await prisma.user.findMany({
+      select: {
+        id: true,
+        authUserId: true,
+        authUser: {
+          select: {
+            name: true,
+            email: true,
+            phone: true,
+            role: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
       },
     });
 
-    if (isUser) {
-      throw new Error("User already exists");
-    }
-    const hashedPassword = await bcrypt.hash(data.password, 12);
+    return users;
+  } catch (error) {
+    throw error;
+  }
+};
 
-    const user = await prisma.user.create({
-      data: {
-        ...data,
-        password: hashedPassword,
-        role: Role.USER,
+const getUserById = async (id: string) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: {
+        id,
       },
       select: {
         id: true,
-        name: true,
-        email: true,
-        phone: true,
-        role: true,
-        createdAt: true,
-        updatedAt: true,
+        authUserId: true,
+        authUser: {
+          select: {
+            name: true,
+            email: true,
+            phone: true,
+            role: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
       },
     });
-
     return user;
   } catch (error) {
-    console.log(error);
     throw error;
   }
 };
 
 export const UserServices = {
-  userServices,
+  getUsers,
+  getUserById,
 };

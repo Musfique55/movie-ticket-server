@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import "@/events/onKeyExpire";
 import "@/modules/reservation/reservation.consumer";
 import "@/modules/payment/payment.consumer";
+import "@/modules/auth/auth.consumer";
 
 const PORT = envVars.port || 4000;
 
