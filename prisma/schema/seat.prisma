@@ -11,7 +11,8 @@ model ShowSeat {
     showTime ShowTime @relation(fields: [showTimeId], references: [id], onDelete: Cascade)
     tickets  Ticket[]
 
-    @@index([seatId, showTimeId])
+    @@index([showTimeId, status])
+    @@index([seatId])
     @@map("showSeat")
 }
 

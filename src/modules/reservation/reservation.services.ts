@@ -6,41 +6,51 @@ import redisClient from "@/config/redis";
 import { seatEmitter } from "@/lib/seatEmitter";
 import { showTimeServices } from "../showTime/showTime.services";
 
+//   // 1. Lock execution
+//   const lockAcquired = await redisClient.eval(...);
+
+//   // 2. DB Transaction
+//   const reservation = await prisma.$transaction(...);
+
+//   return { reservation, seatIds, showTimeId };
+
+const LUA_SCRIPT = `
+  for i = 1, #KEYS do
+    if redis.call('EXISTS', KEYS[i]) == 1 then
+      return 0
+    end
+  end
+  for i = 1, #KEYS do
+    redis.call("SET", KEYS[i], ARGV[1], "EX", ARGV[2]);
+  end;
+  return 1;
+`;
+
 const createReservation = async (data: CreateReservationDTO) => {
   const HOLD_DURATION_MINUTES = 10;
   const expiresAt = new Date(Date.now() + HOLD_DURATION_MINUTES * 60 * 1000);
   const { seatIds, showTimeId, ...dataWithoutSeatIds } = data;
 
-  const acquiredLocks: string[] = [];
+  const lockKeys = seatIds.map(
+    (seatId) => `lock:showSeat:${showTimeId}:seat:${seatId}`,
+  );
 
-  for (const seatId of seatIds) {
-    const lockKey = `lock:showSeat:${showTimeId}:seat:${seatId}`;
-    const lockValue = JSON.stringify({
-      userId: data.userId,
-      seatId,
-      showTimeId,
-      expiresAt,
-    });
+  const lockValue = JSON.stringify({
+    userId: data.userId,
+    showTimeId,
+    expiresAt,
+  });
 
-    // using setnx to acquire the lock
-    const result = await redisClient.set(
-      lockKey,
-      lockValue,
-      "EX",
-      HOLD_DURATION_MINUTES * 60,
-      "NX",
-    );
+  const result = await redisClient.eval(
+    LUA_SCRIPT,
+    lockKeys.length,
+    ...lockKeys,
+    lockValue,
+    HOLD_DURATION_MINUTES * 60,
+  );
 
-    if (!result) {
-      if (acquiredLocks.length > 0) {
-        await redisClient.del(...acquiredLocks);
-      }
-      throw new AppError(
-        "One or more selected seats are currently locked",
-        400,
-      );
-    }
-    acquiredLocks.push(lockKey);
+  if (result !== 1) {
+    throw new AppError("One or more selected seats are currently locked", 400);
   }
 
   try {
@@ -93,12 +103,19 @@ const createReservation = async (data: CreateReservationDTO) => {
 
         return { reservationId: reservation.id, expiresAt };
       },
-      { maxWait: 10000 },
+      { maxWait: 5000, timeout: 5000 },
     );
 
     // emit event for seat availability
-    const updatedShowTime = await showTimeServices.getShowTimeById(showTimeId);
-    seatEmitter.emit(`seatUpdate:${showTimeId}`, updatedShowTime);
+    setImmediate(async () => {
+      try {
+        const updatedShowTime =
+          await showTimeServices.getShowTimeById(showTimeId);
+        seatEmitter.emit(`seatUpdate:${showTimeId}`, updatedShowTime);
+      } catch (error) {
+        console.error("Error emitting seat update event:", error);
+      }
+    });
 
     return {
       reservation,
@@ -106,8 +123,8 @@ const createReservation = async (data: CreateReservationDTO) => {
       showTimeId,
     };
   } catch (error) {
-    if (acquiredLocks.length > 0) {
-      await redisClient.del(...acquiredLocks);
+    if (lockKeys.length > 0) {
+      await redisClient.del(...lockKeys);
     }
     throw error;
   }

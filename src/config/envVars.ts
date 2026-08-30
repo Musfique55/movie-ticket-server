@@ -4,6 +4,8 @@ const envs = [
   "DATABASE_URL",
   "NODE_ENV",
   "REDIS_URL",
+  "REDIS_HOST",
+  "REDIS_PORT",
   "FRONTEND_URL",
   "RABBITMQ_URL",
   "JWT_SECRET",
@@ -25,6 +27,8 @@ const loadEnvs = () => {
     databaseUrl: string;
     nodeEnv: string;
     redisUrl: string;
+    redisHost: string;
+    redisPort: string;
     resendEmail: string;
     rabbitmqUrl: string;
     jwtSecret: string;
@@ -44,6 +48,8 @@ const loadEnvs = () => {
     stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET!,
     stripeSecretKey: process.env.STRIPE_SECRET_KEY!,
     frontendUrl: process.env.FRONTEND_URL!,
+    redisHost: process.env.REDIS_HOST!,
+    redisPort: process.env.REDIS_PORT!,
   };
 
   return value;
