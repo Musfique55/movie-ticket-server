@@ -61,15 +61,6 @@ services:
       timeout: 5s
       retries: 5
 
-  mailhog: # local SMTP Server for testing
-    image: mailhog/mailhog
-    container_name: ticket_booking_mailhog
-    ports:
-      - "1025:1025"
-      - "8025:8025"
-    volumes:
-      - mailhog:/var/lib/mailhog
 
 volumes:
   postgres:
-  mailhog:

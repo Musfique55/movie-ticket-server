@@ -211,6 +211,9 @@ const processPaymentSuccess = async (
 
       await redisClient.del(lockKeys);
 
+      const reservationKey = `lock:reservation:${data.reservationId}`;
+      await redisClient.del(reservationKey);
+
       return {
         reservation: updatedReservation,
         userName: reservation.user.name,
