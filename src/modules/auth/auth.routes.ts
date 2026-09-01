@@ -22,4 +22,11 @@ router.post(
   authController.verifyEmail,
 );
 
+router.post("/google", authController.googleLogin);
+router.get("/google/callback", authController.handleGoogleCallback);
+
+router.post("/resend-verification-code", authController.resendVerificationCode);
+
+router.post("/refresh-token", authController.getRefreshedToken);
+
 export const authRoutes = router;

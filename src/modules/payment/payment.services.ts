@@ -20,7 +20,9 @@ const createCheckoutSession = async (payload: CreateCheckoutSessionDTO) => {
   const reservation = await prisma.reservation.findUnique({
     where: { id: reservationId },
     include: {
-      user: { select: { id: true, name: true, email: true } },
+      user: {
+        select: { authUser: { select: { id: true, name: true, email: true } } },
+      },
     },
   });
 
@@ -75,22 +77,27 @@ const createCheckoutSession = async (payload: CreateCheckoutSessionDTO) => {
       quantity: 1,
     }));
 
-  const session = await stripe.checkout.sessions.create({
-    payment_method_types: ["card"],
-    mode: "payment",
-    line_items: lineItems,
-    customer_email: email || reservation.user.email,
-    success_url: `${envVars.frontendUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${envVars.frontendUrl}/payment/cancel`,
-    metadata: {
-      reservationId: reservation.id,
-      seatIds: JSON.stringify(seatIds),
-      userId: reservation.userId,
-      email: email || reservation.user.email,
-      name: reservation.user.name,
-      showTimeId,
+  const session = await stripe.checkout.sessions.create(
+    {
+      payment_method_types: ["card"],
+      mode: "payment",
+      line_items: lineItems,
+      customer_email: email || reservation.user.authUser.email,
+      success_url: `${envVars.frontendUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${envVars.frontendUrl}/payment/cancel`,
+      metadata: {
+        reservationId: reservation.id,
+        seatIds: JSON.stringify(seatIds),
+        userId: reservation.userId,
+        email: email || reservation.user.authUser.email,
+        name: reservation.user.authUser.name,
+        showTimeId,
+      },
     },
-  });
+    {
+      idempotencyKey: `checkout_session_${reservation.id}`,
+    },
+  );
 
   return {
     checkoutUrl: session.url,
@@ -122,7 +129,7 @@ const processPaymentSuccess = async (
       const reservation = await tx.reservation.findUnique({
         where: { id: data.reservationId },
         include: {
-          user: { select: { name: true } },
+          user: { select: { authUser: { select: { name: true } } } },
         },
       });
 
@@ -216,7 +223,7 @@ const processPaymentSuccess = async (
 
       return {
         reservation: updatedReservation,
-        userName: reservation.user.name,
+        userName: reservation.user.authUser.name,
         discount: reservation.discount,
         tickets: showSeats.map((s) => ({
           name: s.seat.name,

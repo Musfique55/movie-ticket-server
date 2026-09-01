@@ -1,9 +1,15 @@
-import jwt from "jsonwebtoken";
 import { envVars } from "@/config/envVars";
+import jwt from "jsonwebtoken";
 
-const generateToken = (payload: Record<string, unknown>) => {
+const generateAccessToken = (payload: Record<string, unknown>) => {
   return jwt.sign(payload, envVars.jwtSecret, {
-    expiresIn: "15m",
+    expiresIn: envVars.accessTokenExpiresIn as jwt.SignOptions["expiresIn"],
+  });
+};
+
+const generateRefreshToken = (payload: Record<string, unknown>) => {
+  return jwt.sign(payload, envVars.jwtSecret, {
+    expiresIn: envVars.refreshTokenExpiresIn as jwt.SignOptions["expiresIn"],
   });
 };
 
@@ -23,6 +29,7 @@ const verifyToken = (token: string) => {
 };
 
 export const jwtUtils = {
-  generateToken,
+  generateAccessToken,
+  generateRefreshToken,
   verifyToken,
 };
