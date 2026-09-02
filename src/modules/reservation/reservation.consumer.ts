@@ -1,7 +1,7 @@
 import redisClient from "@/config/redis";
 import AppError from "@/helper/AppError";
 import { generateTicketPDF } from "@/helper/generateTicketPDF";
-import { receiveFromQueue } from "@/lib/queue";
+import { receiveFromQueue, sendToQueue } from "@/lib/queue";
 import { sendEmail } from "@/utils/sendEmail";
 
 const initReservationConsumer = async () => {
@@ -55,9 +55,16 @@ const initTicketBookingConfirmationPdfConsumer = async () => {
         to: message.email,
         subject: "Ticket Booking Confirmation",
         attachment: ticket,
+        html: `<p>Ticket booking confirmation</p>`,
       }).catch((err) => {
+        if (!(err instanceof AppError)) {
+          sendToQueue(
+            "ticket_booking_confirmation_email_queue",
+            "ticket_booking_confirmation_email_exchange",
+            JSON.stringify(message),
+          );
+        }
         console.log(err);
-        throw new AppError(err.message || "Failed to send email", 500);
       });
     },
   );

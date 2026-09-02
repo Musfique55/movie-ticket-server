@@ -71,15 +71,6 @@ const createReservation = async (data: CreateReservationDTO) => {
           );
         }
 
-        await tx.showSeat.updateMany({
-          where: {
-            id: { in: seatIds },
-          },
-          data: {
-            status: ShowSeatStatus.LOCKED,
-          },
-        });
-
         const totalAmount = showSeats.reduce(
           (acc, showSeat) => acc + showSeat.seat.basePrice,
           0,
@@ -90,6 +81,17 @@ const createReservation = async (data: CreateReservationDTO) => {
             ...dataWithoutSeatIds,
             totalAmount,
             expiresAt,
+          },
+        });
+
+        await tx.showSeat.updateMany({
+          where: {
+            id: { in: seatIds },
+            reservationId: null,
+          },
+          data: {
+            status: ShowSeatStatus.LOCKED,
+            reservationId: reservation.id,
           },
         });
 

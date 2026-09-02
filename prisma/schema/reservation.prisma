@@ -1,15 +1,16 @@
 model Reservation {
     id          String            @id @unique @default(cuid())
-    userId      String
-    user        User              @relation(fields: [userId], references: [id])
+    userId      String?
+    user        User?             @relation(fields: [userId], references: [id], onDelete: Cascade)
     status      ReservationStatus @default(PENDING)
     totalAmount Float
     discount    Float?
     expiresAt   DateTime?
 
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+    createdAt DateTime   @default(now())
+    updatedAt DateTime   @updatedAt
     tickets   Ticket[]
+    showSeats ShowSeat[]
 
     @@index([userId])
     @@map("reservation")
@@ -18,16 +19,14 @@ model Reservation {
 model Ticket {
     id            String @id @unique @default(cuid())
     reservationId String
-    showSeatId    String
     price         Float
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
     reservation Reservation @relation(fields: [reservationId], references: [id])
-    showSeat    ShowSeat    @relation(fields: [showSeatId], references: [id])
 
-    @@index([reservationId, showSeatId])
+    @@index([reservationId])
     @@map("ticket")
 }
 

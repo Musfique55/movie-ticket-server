@@ -1,7 +1,7 @@
 import z from "zod";
 
 export const createReservationDTO = z.object({
-  userId: z.string(),
+  userId: z.string().optional(),
   discount: z.number().optional(),
   seatIds: z.array(z.string(), {
     error: "Seat IDs must be an array of strings",

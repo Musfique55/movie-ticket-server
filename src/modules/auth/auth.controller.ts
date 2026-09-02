@@ -5,7 +5,6 @@ import { cookieUtils } from "@/utils/cookieUtils";
 import { IRequestUser } from "@/middleware/auth";
 import { sendResponse } from "@/helper/sendResponse";
 import AppError from "@/helper/AppError";
-import { OAuth2Client } from "google-auth-library";
 import { envVars } from "@/config/envVars";
 import { oauthClient } from "@/config/oAuth";
 
