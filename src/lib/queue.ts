@@ -71,3 +71,37 @@ export const receiveFromQueue = async (
     console.warn(error);
   }
 };
+
+export const sendToDelayQueue = async (
+  queue: string,
+  exchange: string,
+  deadLetterExchange: string,
+  deadLetterRoutingKey: string,
+  message: string,
+  ttlMs: number,
+) => {
+  try {
+    const channel = await getRabbitMqChannel();
+
+    await channel.assertExchange(deadLetterExchange, "direct", {
+      durable: true,
+    });
+    await channel.assertExchange(exchange, "direct", { durable: true });
+    await channel.assertQueue(queue, {
+      durable: true,
+      arguments: {
+        "x-dead-letter-exchange": deadLetterExchange,
+        "x-dead-letter-routing-key": deadLetterRoutingKey,
+      },
+    });
+
+    await channel.bindQueue(queue, exchange, queue);
+
+    channel.publish(exchange, queue, Buffer.from(message), {
+      persistent: true,
+      expiration: ttlMs.toString(),
+    });
+  } catch (error: any) {
+    console.warn("Error in sendToDelayQueue", error.message);
+  }
+};

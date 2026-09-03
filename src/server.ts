@@ -1,7 +1,6 @@
 import app from "@/app";
 import { envVars } from "@/config/envVars";
 import { prisma } from "@/lib/prisma";
-import "@/events/onKeyExpire";
 import "@/modules/reservation/reservation.consumer";
 import "@/modules/payment/payment.consumer";
 import "@/modules/auth/auth.consumer";

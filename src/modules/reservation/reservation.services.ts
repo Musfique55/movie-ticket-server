@@ -42,6 +42,7 @@ const createReservation = async (data: CreateReservationDTO) => {
   );
 
   if (result !== 1) {
+    console.log("inside redis");
     throw new AppError("One or more selected seats are currently locked", 400);
   }
 
@@ -124,31 +125,48 @@ const createReservation = async (data: CreateReservationDTO) => {
   }
 };
 
-const unlockSeat = async (seatIds: string[], showTimeId: string) => {
-  await prisma.showSeat.updateMany({
-    where: {
-      id: { in: seatIds },
-      showTimeId,
-      status: ShowSeatStatus.LOCKED,
-    },
-    data: {
-      status: ShowSeatStatus.AVAILABLE,
-    },
-  });
-
-  const updatedShowTime = await showTimeServices.getShowTimeById(showTimeId);
-  seatEmitter.emit(`seatUpdate:${showTimeId}`, updatedShowTime);
-};
-
-const cancelExpiredReservation = async (reservationId: string) => {
+const cancelExpiredReservation = async (
+  reservationId: string,
+  showTimeId: string,
+) => {
   try {
-    const result = await prisma.reservation.update({
-      where: {
-        id: reservationId,
-      },
-      data: {
-        status: ReservationStatus.CANCELLED,
-      },
+    const result = await prisma.$transaction(async (tx) => {
+      const reservation = await tx.reservation.updateMany({
+        where: {
+          id: reservationId,
+          status: ReservationStatus.PENDING,
+        },
+        data: {
+          status: ReservationStatus.CANCELLED,
+        },
+      });
+
+      if (reservation.count === 0) {
+        return;
+      }
+
+      await tx.showSeat.updateMany({
+        where: {
+          reservationId,
+          status: ShowSeatStatus.LOCKED,
+        },
+        data: {
+          status: ShowSeatStatus.AVAILABLE,
+          reservationId: null,
+        },
+      });
+      return reservation;
+    });
+
+    // emit event for seat availability
+    setImmediate(async () => {
+      try {
+        const updatedShowTime =
+          await showTimeServices.getShowTimeById(showTimeId);
+        seatEmitter.emit(`seatUpdate:${showTimeId}`, updatedShowTime);
+      } catch (error) {
+        console.error("Error emitting seat update event:", error);
+      }
     });
 
     return result;
@@ -159,6 +177,5 @@ const cancelExpiredReservation = async (reservationId: string) => {
 
 export const ReservationServices = {
   createReservation,
-  unlockSeat,
   cancelExpiredReservation,
 };
