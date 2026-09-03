@@ -1,0 +1,13 @@
+model User {
+    id         String @id @unique @default(cuid())
+    authUserId String @unique
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    authUser     AuthUser      @relation(fields: [authUserId], references: [id], onDelete: Cascade)
+    reservations Reservation[]
+
+    @@index([authUserId])
+    @@map("user")
+}

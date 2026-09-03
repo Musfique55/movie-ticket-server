@@ -1,14 +1,11 @@
 import { Router } from "express";
 import { UserController } from "./user.controller";
-import { requestValidator } from "@/middleware/requestValidator";
-import { createUserDTO } from "./user.schema";
+import { auth } from "@/middleware/auth";
+import { Role } from "@/generated/prisma/client";
 
 const router = Router();
 
-router.post(
-  "/signup",
-  requestValidator(createUserDTO),
-  UserController.createUser,
-);
+router.get("/", auth(Role.ADMIN), UserController.getUsers);
+router.get("/:id", auth(Role.ADMIN), UserController.getUserById);
 
 export const UserRoutes = router;

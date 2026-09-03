@@ -2,9 +2,7 @@ import { catchAsync } from "@/helper/catchAsync";
 import { NextFunction, Request, Response } from "express";
 import { ReservationServices } from "./reservation.services";
 import { sendResponse } from "@/helper/sendResponse";
-import { showTimeServices } from "../showTime/showTime.services";
-import { seatEmitter } from "@/lib/seatEmitter";
-import { sendToQueue } from "@/lib/queue";
+import { sendToDelayQueue } from "@/lib/queue";
 
 const createReservation = catchAsync(async (req: Request, res: Response) => {
   const result = await ReservationServices.createReservation(req.body);
@@ -15,14 +13,23 @@ const createReservation = catchAsync(async (req: Request, res: Response) => {
     data: result,
   });
 
+  const ttlMs = Math.max(
+    1000,
+    new Date(result.reservation.expiresAt).getTime() - Date.now(),
+  );
+  console.log("ttl", ttlMs);
+
   // Publish event to RabbitMQ
-  await sendToQueue(
-    "reservation_queue",
-    "reservation_exchange",
+  await sendToDelayQueue(
+    "reservation_delay_queue",
+    "reservation_delay_exchange",
+    "reservation_cancel_exchange",
+    "reservation_cancel_routing_key",
     JSON.stringify({
       reservationId: result.reservation.reservationId,
-      expiresAt: result.reservation.expiresAt,
+      showTimeId: result.showTimeId,
     }),
+    ttlMs,
   );
 });
 

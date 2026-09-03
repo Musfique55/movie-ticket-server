@@ -9,10 +9,15 @@ const envs = [
   "FRONTEND_URL",
   "RABBITMQ_URL",
   "JWT_SECRET",
+  "ACCESS_TOKEN_EXPIRES_IN",
+  "REFRESH_TOKEN_EXPIRES_IN",
   "RESEND_SECRET",
   "RESEND_EMAIL",
   "STRIPE_WEBHOOK_SECRET",
   "STRIPE_SECRET_KEY",
+  "GOOGLE_CLIENT_ID",
+  "GOOGLE_SECRET",
+  "GOOGLE_REDIRECT_URL",
 ];
 
 const loadEnvs = () => {
@@ -32,10 +37,15 @@ const loadEnvs = () => {
     resendEmail: string;
     rabbitmqUrl: string;
     jwtSecret: string;
+    accessTokenExpiresIn: string;
+    refreshTokenExpiresIn: string;
     resendSecret: string;
     stripeWebhookSecret: string;
     stripeSecretKey: string;
     frontendUrl: string;
+    googleClientId: string;
+    googleSecret: string;
+    googleRedirectUrl: string;
   } = {
     port: process.env.PORT!,
     databaseUrl: process.env.DATABASE_URL!,
@@ -50,6 +60,11 @@ const loadEnvs = () => {
     frontendUrl: process.env.FRONTEND_URL!,
     redisHost: process.env.REDIS_HOST!,
     redisPort: process.env.REDIS_PORT!,
+    accessTokenExpiresIn: process.env.ACCESS_TOKEN_EXPIRES_IN!,
+    refreshTokenExpiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN!,
+    googleClientId: process.env.GOOGLE_CLIENT_ID!,
+    googleSecret: process.env.GOOGLE_SECRET!,
+    googleRedirectUrl: process.env.GOOGLE_REDIRECT_URL!,
   };
 
   return value;

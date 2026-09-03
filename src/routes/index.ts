@@ -7,11 +7,13 @@ import { paymentRoutes } from "@/modules/payment/payment.route";
 import { MovieRoutes } from "@/modules/movie/movie.routes";
 import { theatreRoutes } from "@/modules/theatre/theatre.routes";
 import { hallRoutes } from "@/modules/hall/hall.routes";
+import { authRoutes } from "@/modules/auth/auth.routes";
 
 const router = Router();
 
+router.use("/auth", authRoutes);
+router.use("/users", UserRoutes);
 router.use("/seats", SeatRoutes);
-router.use("/auth", UserRoutes);
 router.use("/show-times", ShowTimeRoutes);
 router.use("/reservations", reservationRoutes);
 router.use("/payment", paymentRoutes);

@@ -1,0 +1,20 @@
+model Email {
+    id        String    @id @unique @default(cuid())
+    type      EmailType
+    from      String    @db.VarChar(100)
+    to        String    @db.VarChar(100)
+    subject   String    @db.VarChar(255)
+    body      String    @db.Text
+    createdAt DateTime  @default(now())
+
+    @@index([to, type])
+    @@map("email")
+}
+
+enum EmailType {
+    ACTIVATION
+    EMAIL_CHANGE
+    PASSWORD_RESET
+    BOOKING_CONFIRMATION
+    REFUND_CONFIRMATION
+}

@@ -1,24 +1,8 @@
-import redisClient from "@/config/redis";
 import AppError from "@/helper/AppError";
 import { generateTicketPDF } from "@/helper/generateTicketPDF";
-import { receiveFromQueue } from "@/lib/queue";
+import { receiveFromQueue, sendToQueue } from "@/lib/queue";
 import { sendEmail } from "@/utils/sendEmail";
-
-const initReservationConsumer = async () => {
-  await receiveFromQueue(
-    "reservation_queue",
-    "reservation_exchange",
-    "reservation_queue",
-    async (message: { reservationId: string; expiresAt: string | Date }) => {
-      const key = `lock:reservation:${message.reservationId}`;
-      const ttlSeconds = Math.max(
-        1,
-        Math.floor((new Date(message.expiresAt).getTime() - Date.now()) / 1000),
-      );
-      await redisClient.set(key, JSON.stringify(message), "EX", ttlSeconds);
-    },
-  );
-};
+import { ReservationServices } from "./reservation.services";
 
 const initTicketBookingConfirmationPdfConsumer = async () => {
   await receiveFromQueue(
@@ -55,17 +39,47 @@ const initTicketBookingConfirmationPdfConsumer = async () => {
         to: message.email,
         subject: "Ticket Booking Confirmation",
         attachment: ticket,
+        html: `<p>Ticket booking confirmation</p>`,
       }).catch((err) => {
+        if (!(err instanceof AppError)) {
+          sendToQueue(
+            "ticket_booking_confirmation_email_queue",
+            "ticket_booking_confirmation_email_exchange",
+            JSON.stringify(message),
+          );
+        }
         console.log(err);
-        throw new AppError(err.message || "Failed to send email", 500);
+      });
+    },
+  );
+};
+
+const initReservationCancelConsumer = async () => {
+  await receiveFromQueue(
+    "reservation_cancel_queue",
+    "reservation_cancel_exchange",
+    "reservation_cancel_routing_key",
+    async (message: { reservationId: string; showTimeId: string }) => {
+      await ReservationServices.cancelExpiredReservation(
+        message.reservationId,
+        message.showTimeId,
+      ).catch((err) => {
+        if (!(err instanceof AppError)) {
+          sendToQueue(
+            "reservation_cancel_queue",
+            "reservation_cancel_exchange",
+            JSON.stringify(message),
+          );
+        }
+        console.log(err);
       });
     },
   );
 };
 
 try {
-  initReservationConsumer();
   initTicketBookingConfirmationPdfConsumer();
+  initReservationCancelConsumer();
 } catch (error: any) {
   console.warn(
     "⚠️ RabbitMQ worker initialization skipped (running without queue consumer):",

@@ -15,12 +15,19 @@ import { showTimeServices } from "../showTime/showTime.services";
 import { seatEmitter } from "@/lib/seatEmitter";
 
 const createCheckoutSession = async (payload: CreateCheckoutSessionDTO) => {
-  const { reservationId, seatIds, email, showTimeId } = payload;
+  const { reservationId, email, showTimeId, name } = payload;
 
   const reservation = await prisma.reservation.findUnique({
     where: { id: reservationId },
     include: {
-      user: { select: { id: true, name: true, email: true } },
+      user: {
+        select: { authUser: { select: { id: true, name: true, email: true } } },
+      },
+      showSeats: {
+        select: {
+          id: true,
+        },
+      },
     },
   });
 
@@ -36,10 +43,13 @@ const createCheckoutSession = async (payload: CreateCheckoutSessionDTO) => {
     throw new AppError("Reservation has expired", 400);
   }
 
+  const seatIds = reservation.showSeats.map((seat) => seat.id);
+
   const showSeats = await prisma.showSeat.findMany({
     where: {
       id: { in: seatIds },
       status: ShowSeatStatus.LOCKED,
+      reservationId,
     },
     select: {
       id: true,
@@ -75,22 +85,27 @@ const createCheckoutSession = async (payload: CreateCheckoutSessionDTO) => {
       quantity: 1,
     }));
 
-  const session = await stripe.checkout.sessions.create({
-    payment_method_types: ["card"],
-    mode: "payment",
-    line_items: lineItems,
-    customer_email: email || reservation.user.email,
-    success_url: `${envVars.frontendUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${envVars.frontendUrl}/payment/cancel`,
-    metadata: {
-      reservationId: reservation.id,
-      seatIds: JSON.stringify(seatIds),
-      userId: reservation.userId,
-      email: email || reservation.user.email,
-      name: reservation.user.name,
-      showTimeId,
+  const session = await stripe.checkout.sessions.create(
+    {
+      payment_method_types: ["card"],
+      mode: "payment",
+      line_items: lineItems,
+      customer_email: email,
+      success_url: `${envVars.frontendUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${envVars.frontendUrl}/payment/cancel`,
+      metadata: {
+        reservationId: reservation.id,
+        seatIds: JSON.stringify(seatIds),
+        userId: reservation?.userId,
+        email: email,
+        name,
+        showTimeId,
+      },
     },
-  });
+    {
+      idempotencyKey: `checkout_session_${reservation.id}`,
+    },
+  );
 
   return {
     checkoutUrl: session.url,
@@ -122,7 +137,7 @@ const processPaymentSuccess = async (
       const reservation = await tx.reservation.findUnique({
         where: { id: data.reservationId },
         include: {
-          user: { select: { name: true } },
+          user: { select: { authUser: { select: { name: true } } } },
         },
       });
 
@@ -183,7 +198,6 @@ const processPaymentSuccess = async (
 
       const tickets = showSeats.map((s) => ({
         reservationId: data.reservationId,
-        showSeatId: s.id,
         price: s.seat.basePrice,
       }));
 
@@ -216,7 +230,7 @@ const processPaymentSuccess = async (
 
       return {
         reservation: updatedReservation,
-        userName: reservation.user.name,
+        userName: data.name,
         discount: reservation.discount,
         tickets: showSeats.map((s) => ({
           name: s.seat.name,
@@ -235,7 +249,7 @@ const processPaymentSuccess = async (
 
     const pdfData = {
       reservationId: result.reservation.id,
-      userName: result.userName,
+      userName: data.name,
       email: data.email,
       totalAmount: Number(result.reservation.totalAmount),
       discount: Number(result.reservation.discount),
