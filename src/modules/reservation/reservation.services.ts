@@ -42,7 +42,6 @@ const createReservation = async (data: CreateReservationDTO) => {
   );
 
   if (result !== 1) {
-    console.log("inside redis");
     throw new AppError("One or more selected seats are currently locked", 400);
   }
 

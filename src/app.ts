@@ -9,6 +9,7 @@ import { notFound } from "./middleware/notFound";
 import { paymentController } from "@/modules/payment/payment.controller";
 import { showTimeServices } from "./modules/showTime/showTime.services";
 import { seatEmitter } from "./lib/seatEmitter";
+import rateLimit from "express-rate-limit";
 
 const app = express();
 
@@ -26,6 +27,7 @@ app.post(
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use;
 app.use(morgan("dev"));
 
 // sse for real-time seat availability
@@ -63,6 +65,26 @@ app.get("/health", (req, res) => {
 
 app.use("/api/v1", routes);
 
+// rate limiting
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: "Too many requests from this IP, please try again later",
+  standardHeaders: true,
+  legacyHeaders: false,
+  ipv6Subnet: 56,
+  handler: (req, res, next, options) => {
+    res.status(429).json({
+      status: "error",
+      message: options.message,
+    });
+  },
+  keyGenerator: (req, res) => {
+    return req.ip as string;
+  },
+});
+
+app.use(apiLimiter);
 app.use(notFound);
 app.use(globalErrorHandler);
 

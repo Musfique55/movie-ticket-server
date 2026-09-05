@@ -32,6 +32,7 @@ services:
     ports:
       - "5050:80"
 
+
   # Redis Cache & Pub/Sub Service
   redis:
     image: redis/redis-stack:latest
