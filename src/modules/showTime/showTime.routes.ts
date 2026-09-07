@@ -10,8 +10,12 @@ router.post(
   requestValidator(createShowTimeDTO),
   ShowTimeController.createShowTime,
 );
+
+router.get("/:id/seats/stream", ShowTimeController.getEventSeats);
+
 router.get("/", ShowTimeController.getAllShowTimes);
 router.get("/:id", ShowTimeController.getShowTimeById);
+
 router.patch(
   "/:id",
   requestValidator(updateShowTimeDTO),

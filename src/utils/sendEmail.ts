@@ -1,10 +1,13 @@
 import { envVars } from "@/config/envVars";
 import { resendInstance } from "@/config/resend";
+import { EmailType } from "@/generated/prisma/client";
+import { EmailServices } from "@/modules/email/email.services";
 interface EmailOptions {
   to: string;
   subject: string;
   attachment?: Buffer;
   html: string;
+  type: EmailType;
 }
 
 export const sendEmail = async ({
@@ -12,6 +15,7 @@ export const sendEmail = async ({
   subject,
   attachment,
   html,
+  type,
 }: EmailOptions) => {
   try {
     await resendInstance.emails.send({
@@ -27,6 +31,15 @@ export const sendEmail = async ({
           ]
         : [],
       html,
+    });
+
+    // log in db
+    await EmailServices.emailLogger({
+      to,
+      subject,
+      from: envVars.resendEmail,
+      text: html,
+      type,
     });
   } catch (error) {
     console.log(error);
