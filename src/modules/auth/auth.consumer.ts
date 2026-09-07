@@ -1,4 +1,5 @@
 import redisClient from "@/config/redis";
+import { EmailType } from "@/generated/prisma/client";
 import { receiveFromQueue } from "@/lib/queue";
 import { sendEmail } from "@/utils/sendEmail";
 
@@ -13,6 +14,7 @@ export const initAuthConsumer = async () => {
       await redisClient.set(key, message.hashedCode, "EX", 600); // 10 minutes
 
       await sendEmail({
+        type: EmailType.ACTIVATION,
         to: message.email,
         subject: "Email Verification",
         html: `

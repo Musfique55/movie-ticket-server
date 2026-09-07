@@ -37,6 +37,8 @@
     "qrcode": "^1.5.4",
     "resend": "^6.22.0",
     "stripe": "^22.5.0",
+    "swagger-ui-express": "^5.0.1",
+    "yamljs": "^0.3.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
@@ -51,6 +53,8 @@
     "@types/node": "^24.13.3",
     "@types/pdfkit": "^0.17.6",
     "@types/pg": "^8.21.0",
+    "@types/swagger-ui-express": "^4.1.8",
+    "@types/yamljs": "^0.2.34",
     "prisma": "^7.9.1",
     "tsc-alias": "^1.9.1",
     "tsx": "^4.23.12",

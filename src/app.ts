@@ -1,14 +1,16 @@
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import express, { Request, Response } from "express";
+import express from "express";
 import helmet from "helmet";
 import morgan from "morgan";
+import path from "path";
+import swaggerUi from "swagger-ui-express";
+import YAML from "yamljs";
 import { routes } from "./routes";
 import { globalErrorHandler } from "@/middleware/globalErrorHandler";
 import { notFound } from "./middleware/notFound";
 import { paymentController } from "@/modules/payment/payment.controller";
-import { showTimeServices } from "./modules/showTime/showTime.services";
-import { seatEmitter } from "./lib/seatEmitter";
+
 import rateLimit from "express-rate-limit";
 
 const app = express();
@@ -27,36 +29,10 @@ app.post(
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use;
 app.use(morgan("dev"));
 
-// sse for real-time seat availability
-app.get("/events/:showTimeId", async (req: Request, res: Response) => {
-  res.setHeader("Content-Type", "text/event-stream");
-  res.setHeader("Cache-Control", "no-cache");
-  res.setHeader("Connection", "keep-alive");
-
-  res.write(`data: ${JSON.stringify({ status: "connected" })}\n\n`);
-
-  // send seat availability
-  const { showTimeId } = req.params;
-
-  const initialData = await showTimeServices.getShowTimeById(
-    showTimeId as string,
-  );
-
-  res.write(`data: ${JSON.stringify(initialData)}\n\n`);
-
-  const onSeatUpdate = (data: any) => {
-    res.write(`data: ${JSON.stringify(data)}\n\n`);
-  };
-
-  seatEmitter.on(`seatUpdate:${showTimeId}`, onSeatUpdate);
-
-  req.on("close", () => {
-    seatEmitter.off(`seatUpdate:${showTimeId}`, onSeatUpdate);
-  });
-});
+const swaggerDocument = YAML.load(path.join(__dirname, "./docs/swagger.yaml"));
+app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // health check endpoint
 app.get("/health", (req, res) => {
@@ -78,9 +54,6 @@ const apiLimiter = rateLimit({
       status: "error",
       message: options.message,
     });
-  },
-  keyGenerator: (req, res) => {
-    return req.ip as string;
   },
 });
 

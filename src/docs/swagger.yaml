@@ -1,0 +1,931 @@
+openapi: 3.0.3
+info:
+  title: Ticket Booking System API
+  description: Comprehensive RESTful API for Movie Ticket Booking System including authentication, movies, theatres, halls, showtimes, seats, reservations, payments, and real-time seat updates via SSE.
+  version: 1.0.0
+  contact:
+    name: API Support
+
+servers:
+  - url: http://localhost:4000
+    description: Local Development Server
+
+paths:
+  /health:
+    get:
+      summary: Health Check
+      description: Returns current server health status.
+      tags:
+        - System
+      responses:
+        "200":
+          description: Server is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Server is up & healthy
+
+  /api/v1/show-times/{showTimeId}/seats/stream:
+    get:
+      summary: Real-time Seat Updates (SSE)
+      description: Establishes a Server-Sent Events (SSE) connection to stream live seat availability updates for a specific showtime.
+      tags:
+        - Real-time Events
+      parameters:
+        - name: showTimeId
+          in: path
+          required: true
+          description: ShowTime ID
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Server-Sent Events Stream
+          content:
+            text/event-stream:
+              schema:
+                type: string
+                example: "data: {\"status\":\"connected\"}\n\n"
+
+  /webhook:
+    post:
+      summary: Stripe Webhook
+      description: Receives Stripe webhook notifications for payment event processing.
+      tags:
+        - Payment
+      parameters:
+        - name: stripe-signature
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Webhook received successfully
+
+  /api/v1/auth/signup:
+    post:
+      summary: Register User
+      description: Registers a new user with email, password, phone, and name.
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SignupRequest"
+      responses:
+        "201":
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+        "400":
+          description: Validation Error or User already exists
+
+  /api/v1/auth/signin:
+    post:
+      summary: User Login
+      description: Authenticates user credentials and returns JWT access & refresh tokens.
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+        "401":
+          description: Invalid credentials
+
+  /api/v1/auth/me:
+    get:
+      summary: Get Profile
+      description: Gets profile details of current logged-in user.
+      tags:
+        - Authentication
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: User profile details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+        "401":
+          description: Unauthorized
+
+  /api/v1/auth/verify-email:
+    post:
+      summary: Verify Email
+      description: Verifies user account with the email verification code.
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - code
+              properties:
+                email:
+                  type: string
+                  format: email
+                code:
+                  type: string
+      responses:
+        "200":
+          description: Email verified successfully
+
+  /api/v1/auth/google:
+    post:
+      summary: Google OAuth Signin
+      description: Authenticates user via Google OAuth ID token.
+      tags:
+        - Authentication
+      responses:
+        "200":
+          description: Google login successful
+
+  /api/v1/auth/google/callback:
+    get:
+      summary: Google OAuth Callback
+      description: Callback endpoint for Google OAuth flow.
+      tags:
+        - Authentication
+      responses:
+        "200":
+          description: OAuth completed
+
+  /api/v1/auth/resend-verification-code:
+    post:
+      summary: Resend Verification Code
+      description: Resends verification code to user email.
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        "200":
+          description: Verification code resent
+
+  /api/v1/auth/refresh-token:
+    post:
+      summary: Refresh Access Token
+      description: Generates a new access token using refresh token.
+      tags:
+        - Authentication
+      responses:
+        "200":
+          description: Token refreshed
+
+  /api/v1/users:
+    get:
+      summary: Get All Users
+      description: Fetches all registered users. (Admin access required)
+      tags:
+        - Users
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: List of users
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+        "403":
+          description: Forbidden - Admin access required
+
+  /api/v1/users/{id}:
+    get:
+      summary: Get User By ID
+      description: Fetches user by ID. (Admin access required)
+      tags:
+        - Users
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+
+  /api/v1/movies:
+    post:
+      summary: Create Movie
+      description: Creates a new movie record.
+      tags:
+        - Movies
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateMovieRequest"
+      responses:
+        "201":
+          description: Movie created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+
+  /api/v1/movies/{id}:
+    patch:
+      summary: Update Movie
+      description: Updates details of an existing movie.
+      tags:
+        - Movies
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateMovieRequest"
+      responses:
+        "200":
+          description: Movie updated successfully
+    delete:
+      summary: Delete Movie
+      description: Deletes a movie by ID.
+      tags:
+        - Movies
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Movie deleted successfully
+
+  /api/v1/theatres:
+    post:
+      summary: Create Theatre
+      description: Creates a new cinema theatre.
+      tags:
+        - Theatres
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTheatreRequest"
+      responses:
+        "201":
+          description: Theatre created successfully
+
+  /api/v1/theatres/{id}:
+    patch:
+      summary: Update Theatre
+      description: Updates theatre details.
+      tags:
+        - Theatres
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateTheatreRequest"
+      responses:
+        "200":
+          description: Theatre updated successfully
+    delete:
+      summary: Delete Theatre
+      description: Deletes a theatre by ID.
+      tags:
+        - Theatres
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Theatre deleted successfully
+
+  /api/v1/theatres/{id}/movies:
+    get:
+      summary: Get Theatre Movies
+      description: Fetches all movies currently showing in a specific theatre.
+      tags:
+        - Theatres
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Theatre ID
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of movies in theatre
+
+  /api/v1/theatres/{id}/movies/{movieId}:
+    get:
+      summary: Get Theatre Movie Details
+      description: Fetches detailed information and showtimes for a specific movie in a theatre.
+      tags:
+        - Theatres
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Theatre ID
+          schema:
+            type: string
+        - name: movieId
+          in: path
+          required: true
+          description: Movie ID
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Movie details and showtimes
+
+  /api/v1/halls:
+    post:
+      summary: Create Hall
+      description: Creates a new hall in a theatre.
+      tags:
+        - Halls
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateHallRequest"
+      responses:
+        "201":
+          description: Hall created successfully
+    get:
+      summary: Get All Halls
+      description: Fetches all cinema halls.
+      tags:
+        - Halls
+      responses:
+        "200":
+          description: List of halls
+
+  /api/v1/halls/{id}:
+    get:
+      summary: Get Hall By ID
+      description: Fetches a single hall by ID.
+      tags:
+        - Halls
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Hall details
+    patch:
+      summary: Update Hall
+      description: Updates hall name by ID.
+      tags:
+        - Halls
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+      responses:
+        "200":
+          description: Hall updated successfully
+    delete:
+      summary: Delete Hall
+      description: Deletes a hall by ID.
+      tags:
+        - Halls
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Hall deleted successfully
+
+  /api/v1/show-times:
+    post:
+      summary: Create ShowTime
+      description: Schedules a new movie showtime in a theatre hall.
+      tags:
+        - ShowTimes
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateShowTimeRequest"
+      responses:
+        "201":
+          description: ShowTime created successfully
+    get:
+      summary: Get All ShowTimes
+      description: Fetches all showtimes.
+      tags:
+        - ShowTimes
+      responses:
+        "200":
+          description: List of showtimes
+
+  /api/v1/show-times/{id}:
+    get:
+      summary: Get ShowTime By ID
+      description: Fetches details of a specific showtime.
+      tags:
+        - ShowTimes
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ShowTime details
+    patch:
+      summary: Update ShowTime
+      description: Updates start time for a showtime.
+      tags:
+        - ShowTimes
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - startTime
+              properties:
+                startTime:
+                  type: string
+                  format: date-time
+      responses:
+        "200":
+          description: ShowTime updated successfully
+    delete:
+      summary: Delete ShowTime
+      description: Deletes a showtime by ID.
+      tags:
+        - ShowTimes
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ShowTime deleted successfully
+
+  /api/v1/seats:
+    post:
+      summary: Create Seats (Batch)
+      description: Creates one or multiple seats for a hall in a theatre.
+      tags:
+        - Seats
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/CreateSeatItem"
+      responses:
+        "201":
+          description: Seats created successfully
+    get:
+      summary: Get All Seats
+      description: Fetches all seats.
+      tags:
+        - Seats
+      responses:
+        "200":
+          description: List of seats
+
+  /api/v1/seats/{id}:
+    get:
+      summary: Get Seat By ID
+      description: Fetches details of a specific seat.
+      tags:
+        - Seats
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Seat details
+    patch:
+      summary: Update Seat
+      description: Updates details of a seat.
+      tags:
+        - Seats
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateSeatItem"
+      responses:
+        "200":
+          description: Seat updated successfully
+    delete:
+      summary: Delete Seat
+      description: Deletes a seat by ID.
+      tags:
+        - Seats
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Seat deleted successfully
+
+  /api/v1/reservations:
+    post:
+      summary: Create Reservation
+      description: Reserves seats for a showtime.
+      tags:
+        - Reservations
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateReservationRequest"
+      responses:
+        "201":
+          description: Reservation created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+
+  /api/v1/payment/create-checkout-session:
+    post:
+      summary: Create Checkout Session
+      description: Initiates a Stripe checkout session for a reservation.
+      tags:
+        - Payment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCheckoutSessionRequest"
+      responses:
+        "200":
+          description: Stripe checkout session created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    ApiResponse:
+      type: object
+      properties:
+        statusCode:
+          type: integer
+          example: 200
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Operation completed successfully
+        data:
+          type: object
+
+    SignupRequest:
+      type: object
+      required:
+        - email
+        - password
+        - phone
+        - name
+      properties:
+        email:
+          type: string
+          format: email
+          example: user@example.com
+        password:
+          type: string
+          minLength: 8
+          maxLength: 16
+          example: Password123
+        phone:
+          type: string
+          example: "+1234567890"
+        name:
+          type: string
+          example: John Doe
+
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: user@example.com
+        password:
+          type: string
+          example: Password123
+
+    CreateMovieRequest:
+      type: object
+      required:
+        - name
+        - duration
+      properties:
+        name:
+          type: string
+          example: Inception
+        duration:
+          type: string
+          example: 148 mins
+
+    UpdateMovieRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Inception
+        duration:
+          type: string
+          example: 148 mins
+
+    CreateTheatreRequest:
+      type: object
+      required:
+        - name
+        - location
+        - city
+      properties:
+        name:
+          type: string
+          example: Cineplex Star
+        location:
+          type: string
+          example: Downtown Plaza
+        city:
+          type: string
+          example: New York
+
+    UpdateTheatreRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        location:
+          type: string
+        city:
+          type: string
+
+    CreateHallRequest:
+      type: object
+      required:
+        - name
+        - theatreId
+      properties:
+        name:
+          type: string
+          example: Hall 1
+        theatreId:
+          type: string
+          example: cuid_theatre_123
+
+    CreateShowTimeRequest:
+      type: object
+      required:
+        - movieId
+        - startTime
+        - hallId
+        - theatreId
+      properties:
+        movieId:
+          type: string
+          example: cuid_movie_123
+        startTime:
+          type: string
+          format: date-time
+          example: "2026-09-10T18:00:00Z"
+        hallId:
+          type: string
+          example: cuid_hall_123
+        theatreId:
+          type: string
+          example: cuid_theatre_123
+
+    CreateSeatItem:
+      type: object
+      required:
+        - name
+        - rowPosition
+        - columnPosition
+        - basePrice
+        - type
+        - theatreId
+        - hallId
+      properties:
+        name:
+          type: string
+          example: A1
+        rowPosition:
+          type: string
+          example: A
+        columnPosition:
+          type: integer
+          example: 1
+        basePrice:
+          type: number
+          example: 15.5
+        type:
+          type: string
+          enum:
+            - STANDARD
+            - PREMIUM
+            - VIP
+          example: STANDARD
+        status:
+          type: string
+          enum:
+            - AVAILABLE
+            - UNAVAILABLE
+          default: AVAILABLE
+        theatreId:
+          type: string
+        hallId:
+          type: string
+
+    UpdateSeatItem:
+      type: object
+      properties:
+        name:
+          type: string
+        rowPosition:
+          type: string
+        columnPosition:
+          type: integer
+        basePrice:
+          type: number
+        type:
+          type: string
+          enum:
+            - STANDARD
+            - PREMIUM
+            - VIP
+        status:
+          type: string
+          enum:
+            - AVAILABLE
+            - UNAVAILABLE
+        theatreId:
+          type: string
+        hallId:
+          type: string
+
+    CreateReservationRequest:
+      type: object
+      required:
+        - seatIds
+        - showTimeId
+      properties:
+        userId:
+          type: string
+        discount:
+          type: number
+        seatIds:
+          type: array
+          items:
+            type: string
+          example:
+            - seat_id_1
+            - seat_id_2
+        showTimeId:
+          type: string
+          example: showtime_id_123
+
+    CreateCheckoutSessionRequest:
+      type: object
+      required:
+        - reservationId
+        - email
+        - showTimeId
+        - name
+      properties:
+        reservationId:
+          type: string
+          example: reservation_id_123
+        email:
+          type: string
+          format: email
+          example: user@example.com
+        showTimeId:
+          type: string
+          example: showtime_id_123
+        name:
+          type: string
+          example: John Doe

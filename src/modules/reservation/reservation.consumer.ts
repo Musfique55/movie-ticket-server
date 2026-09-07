@@ -3,6 +3,7 @@ import { generateTicketPDF } from "@/helper/generateTicketPDF";
 import { receiveFromQueue, sendToQueue } from "@/lib/queue";
 import { sendEmail } from "@/utils/sendEmail";
 import { ReservationServices } from "./reservation.services";
+import { EmailType } from "@/generated/prisma/client";
 
 const initTicketBookingConfirmationPdfConsumer = async () => {
   await receiveFromQueue(
@@ -36,6 +37,7 @@ const initTicketBookingConfirmationPdfConsumer = async () => {
       }
 
       await sendEmail({
+        type: EmailType.BOOKING_CONFIRMATION,
         to: message.email,
         subject: "Ticket Booking Confirmation",
         attachment: ticket,
