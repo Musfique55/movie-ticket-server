@@ -9,6 +9,8 @@ info:
 servers:
   - url: http://localhost:4000
     description: Local Development Server
+  - url: https://movie-ticket-server-n9vr.onrender.com
+    description: Production Server
 
 paths:
   /health:
