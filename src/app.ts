@@ -18,7 +18,9 @@ const app = express();
 
 // Security headers
 app.use(helmet());
-app.use(cors());
+app.use(cors({
+  origin: ["http://localhost:3000", "https://movie-ticket-server-n9vr.onrender.com"],
+}));
 app.use(cookieParser());
 
 // stripe webhook
