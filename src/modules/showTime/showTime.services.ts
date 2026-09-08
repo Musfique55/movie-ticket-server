@@ -85,7 +85,7 @@ const getAllShowTimes = async () => {
   }
 };
 
-const getShowTimeById = async (id: string) => {
+const getEventSeatsById = async (id: string) => {
   try {
     const result = await prisma.showTime.findUnique({
       where: {
@@ -159,7 +159,7 @@ const deleteShowTime = async (id: string) => {
 export const showTimeServices = {
   createShowTime,
   getAllShowTimes,
-  getShowTimeById,
+  getEventSeatsById,
   updateShowTime,
   deleteShowTime,
 };

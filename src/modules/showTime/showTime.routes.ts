@@ -14,7 +14,7 @@ router.post(
 router.get("/:id/seats/stream", ShowTimeController.getEventSeats);
 
 router.get("/", ShowTimeController.getAllShowTimes);
-router.get("/:id", ShowTimeController.getShowTimeById);
+router.get("/:id", ShowTimeController.getEventSeatsById);
 
 router.patch(
   "/:id",

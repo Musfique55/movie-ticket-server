@@ -104,7 +104,7 @@ const createReservation = async (data: CreateReservationDTO) => {
     setImmediate(async () => {
       try {
         const updatedShowTime =
-          await showTimeServices.getShowTimeById(showTimeId);
+          await showTimeServices.getEventSeatsById(showTimeId);
         seatEmitter.emit(`seatUpdate:${showTimeId}`, updatedShowTime);
       } catch (error) {
         console.error("Error emitting seat update event:", error);
@@ -161,7 +161,7 @@ const cancelExpiredReservation = async (
     setImmediate(async () => {
       try {
         const updatedShowTime =
-          await showTimeServices.getShowTimeById(showTimeId);
+          await showTimeServices.getEventSeatsById(showTimeId);
         seatEmitter.emit(`seatUpdate:${showTimeId}`, updatedShowTime);
       } catch (error) {
         console.error("Error emitting seat update event:", error);

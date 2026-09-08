@@ -242,7 +242,7 @@ const processPaymentSuccess = async (
       };
     });
 
-    const updatedShowTime = await showTimeServices.getShowTimeById(
+    const updatedShowTime = await showTimeServices.getEventSeatsById(
       data.showTimeId,
     );
     seatEmitter.emit(`seatUpdate:${data.showTimeId}`, updatedShowTime);

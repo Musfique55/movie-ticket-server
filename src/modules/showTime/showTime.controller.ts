@@ -33,8 +33,8 @@ const getAllShowTimes = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-const getShowTimeById = catchAsync(async (req: Request, res: Response) => {
-  const result = await showTimeServices.getShowTimeById(
+const getEventSeatsById = catchAsync(async (req: Request, res: Response) => {
+  const result = await showTimeServices.getEventSeatsById(
     req.params.id as string,
   );
 
@@ -84,7 +84,7 @@ const getEventSeats = catchAsync(async (req: Request, res: Response) => {
   res.write(`data: ${JSON.stringify({ status: "connected" })}\n\n`);
 
   // send seat availability
-  const initialData = await showTimeServices.getShowTimeById(id as string);
+  const initialData = await showTimeServices.getEventSeatsById(id as string);
 
   res.write(`data: ${JSON.stringify(initialData)}\n\n`);
 
@@ -102,7 +102,7 @@ const getEventSeats = catchAsync(async (req: Request, res: Response) => {
 export const ShowTimeController = {
   createShowTime,
   getAllShowTimes,
-  getShowTimeById,
+  getEventSeatsById,
   updateShowTime,
   deleteShowTime,
   getEventSeats,
