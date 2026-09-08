@@ -2,6 +2,7 @@ import { getRabbitMqChannel } from "@/config/getRabbitMqChannel";
 
 const RETRY_LIMIT = 5;
 const RETRY_DELAY_MS = 5000;
+const CONNECTION_RETRY_DELAY_MS = 5000;
 
 export const sendToQueue = async (
   queue: string,
@@ -27,48 +28,64 @@ export const receiveFromQueue = async (
   routingKey: string,
   onMessage: (message: any) => Promise<void> | void,
 ) => {
-  try {
-    const channel = await getRabbitMqChannel();
-    await channel.assertExchange(exchange, "direct", { durable: true });
-    channel.prefetch(1);
-    const q = await channel.assertQueue(queue, { durable: true });
-    await channel.bindQueue(q.queue, exchange, routingKey);
+  while (true) {
+    try {
+      const channel = await getRabbitMqChannel();
+      await channel.assertExchange(exchange, "direct", { durable: true });
+      channel.prefetch(1);
+      const q = await channel.assertQueue(queue, { durable: true });
+      await channel.bindQueue(q.queue, exchange, routingKey);
 
-    channel.consume(q.queue, async (msg) => {
-      if (msg) {
-        try {
-          const parsedMessage = JSON.parse(msg.content.toString());
-          await onMessage(parsedMessage);
-          channel.ack(msg);
-        } catch (error) {
-          const headers = msg.properties.headers || {};
-          const retryCount = Number(headers["x-death"] || 0);
+      await new Promise<void>((resolve, reject) => {
+        channel.once("close", resolve);
+        channel.once("error", reject);
 
-          if (retryCount < RETRY_LIMIT) {
-            console.warn(
-              `Retrying message (${retryCount + 1}/${RETRY_LIMIT}) in ${RETRY_DELAY_MS / 1000} seconds...`,
-            );
+        channel.consume(q.queue, async (msg) => {
+          if (msg) {
+            try {
+              const parsedMessage = JSON.parse(msg.content.toString());
+              await onMessage(parsedMessage);
+              channel.ack(msg);
+            } catch (error) {
+              const headers = msg.properties.headers || {};
+              const retryCount = Number(headers["x-death"] || 0);
 
-            await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
+              if (retryCount < RETRY_LIMIT) {
+                console.warn(
+                  `Retrying message (${retryCount + 1}/${RETRY_LIMIT}) in ${RETRY_DELAY_MS / 1000} seconds...`,
+                );
 
-            channel.publish(exchange, routingKey, msg.content, {
-              ...msg.properties,
-              headers: {
-                ...headers,
-                "x-death": (retryCount + 1).toString(),
-              },
-            });
+                await new Promise((resolve) =>
+                  setTimeout(resolve, RETRY_DELAY_MS),
+                );
 
-            channel.ack(msg);
-          } else {
-            console.error(`exceeds retry count for queue ${queue}`, error);
-            channel.nack(msg, false, false);
+                channel.publish(exchange, routingKey, msg.content, {
+                  ...msg.properties,
+                  headers: {
+                    ...headers,
+                    "x-death": (retryCount + 1).toString(),
+                  },
+                });
+
+                channel.ack(msg);
+              } else {
+                console.error(`exceeds retry count for queue ${queue}`, error);
+                channel.nack(msg, false, false);
+              }
+            }
           }
-        }
-      }
-    });
-  } catch (error: any) {
-    console.warn(error);
+        });
+      });
+    } catch (error: any) {
+      console.error(
+        `RabbitMQ worker setup failed for ${queue}; retrying in ${CONNECTION_RETRY_DELAY_MS / 1000}s:`,
+        error.message,
+      );
+    }
+
+    await new Promise((resolve) =>
+      setTimeout(resolve, CONNECTION_RETRY_DELAY_MS),
+    );
   }
 };
 

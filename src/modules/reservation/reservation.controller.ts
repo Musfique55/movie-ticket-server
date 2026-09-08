@@ -17,7 +17,6 @@ const createReservation = catchAsync(async (req: Request, res: Response) => {
     1000,
     new Date(result.reservation.expiresAt).getTime() - Date.now(),
   );
-  console.log("ttl", ttlMs);
 
   // Publish event to RabbitMQ
   await sendToDelayQueue(

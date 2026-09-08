@@ -11,14 +11,16 @@ import { routes } from "./routes";
 import { globalErrorHandler } from "@/middleware/globalErrorHandler";
 import { notFound } from "./middleware/notFound";
 import { paymentController } from "@/modules/payment/payment.controller";
-
+import cron from "node-cron";
 import rateLimit from "express-rate-limit";
 
 const app = express();
 
 // Security headers
 app.use(helmet());
-app.use(cors());
+app.use(cors({
+  origin: ["http://localhost:3000", "https://movie-ticket-server-n9vr.onrender.com"],
+}));
 app.use(cookieParser());
 
 // stripe webhook
@@ -41,6 +43,7 @@ app.get("/health", (req, res) => {
   res.status(200).json({ message: "Server is up & healthy" });
 });
 
+
 app.use("/api/v1", routes);
 
 // rate limiting
@@ -57,6 +60,15 @@ const apiLimiter = rateLimit({
       message: options.message,
     });
   },
+});
+
+// ping for render.com to keep the server alive
+cron.schedule("*/5 * * * *", async () => {
+  try {
+    await fetch("https://movie-ticket-server-n9vr.onrender.com/health");
+  } catch (error) {
+    console.error("Error occurred while pinging the server:", error);
+  }
 });
 
 app.use(apiLimiter);
