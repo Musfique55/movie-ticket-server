@@ -5,11 +5,11 @@
   "main": "server.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "tsc && tsc-alias --resolve-full-paths && node -e \"require('node:fs').cpSync('src/docs', 'dist/docs', { recursive: true })\"",
+    "build": "tsc && tsc-alias --resolve-full-paths && node -e \"if (require('node:fs').existsSync('src/docs')) require('node:fs').cpSync('src/docs', 'dist/docs', { recursive: true })\"",
     "start": "node dist/server.js",
     "db:migrate": "npx prisma migrate dev",
     "db:generate": "npx prisma generate",
-    "stripe:webhook": "stripe listen --forward-to localhost:4000/webhook"
+    "stripe:webhook": "stripe listen --forward-to https://movie-ticket-server-n9vr.onrender.com/webhook"
   },
   "keywords": [],
   "author": "",
