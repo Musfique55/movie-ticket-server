@@ -4,6 +4,7 @@ import express from "express";
 import helmet from "helmet";
 import morgan from "morgan";
 import path from "path";
+import { fileURLToPath } from "url";
 import swaggerUi from "swagger-ui-express";
 import YAML from "yamljs";
 import { routes } from "./routes";
@@ -31,7 +32,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan("dev"));
 
-const swaggerDocument = YAML.load(path.join(__dirname, "./docs/swagger.yaml"));
+const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
+const swaggerDocument = YAML.load(path.join(currentDirectory, "docs/swagger.yaml"));
 app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // health check endpoint

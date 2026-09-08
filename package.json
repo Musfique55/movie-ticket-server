@@ -2,10 +2,10 @@
   "name": "ticket-booking-server",
   "version": "1.0.0",
   "description": "",
-  "main": "server.ts",
+  "main": "server.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "tsc && tsc-alias",
+    "build": "tsc && tsc-alias --resolve-full-paths && node -e \"require('node:fs').cpSync('src/docs', 'dist/docs', { recursive: true })\"",
     "start": "node dist/server.js",
     "db:migrate": "npx prisma migrate dev",
     "db:generate": "npx prisma generate",
@@ -14,7 +14,7 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
+  "type": "module",
   "dependencies": {
     "@prisma/adapter-pg": "^7.9.1",
     "@prisma/client": "^7.9.1",
