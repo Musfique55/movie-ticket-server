@@ -1,4 +1,4 @@
-import redisClient from "@/config/redis";
+import { redisClient } from "@/config/redis";
 import { EmailType } from "@/generated/prisma/client";
 import { receiveFromQueue } from "@/lib/queue";
 import { sendEmail } from "@/utils/sendEmail";

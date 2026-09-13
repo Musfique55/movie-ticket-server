@@ -1,4 +1,4 @@
-import redisClient from "@/config/redis";
+import {redisClient} from "@/config/redis";
 import { envVars } from "@/config/envVars";
 import { stripe } from "@/config/stripe";
 import {
@@ -223,7 +223,7 @@ const processPaymentSuccess = async (
         (id) => `lock:showSeat:${showTimeId}:seat:${id}`,
       );
 
-      await redisClient.del(lockKeys);
+      await redisClient.del(...lockKeys);
 
       const reservationKey = `lock:reservation:${data.reservationId}`;
       await redisClient.del(reservationKey);
@@ -268,9 +268,6 @@ const processPaymentSuccess = async (
         error.message === "SEATS_NO_LONGER_AVAILABLE") &&
       paymentIntentId
     ) {
-      console.log(
-        `Reservation ${data.reservationId} expired/unavailable. Issuing full refund for paymentIntent: ${paymentIntentId}`,
-      );
       await Promise.all([
         stripe.refunds.create({
           payment_intent: paymentIntentId,
