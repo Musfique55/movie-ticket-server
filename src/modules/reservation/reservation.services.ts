@@ -2,7 +2,7 @@ import { ReservationStatus, ShowSeatStatus } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { CreateReservationDTO } from "./reservation.schema";
 import AppError from "@/helper/AppError";
-import redisClient from "@/config/redis";
+import {redisClient} from "@/config/redis";
 import { seatEmitter } from "@/lib/seatEmitter";
 import { showTimeServices } from "../showTime/showTime.services";
 

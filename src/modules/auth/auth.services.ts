@@ -4,7 +4,7 @@ import AppError from "@/helper/AppError";
 import { CreateUserDTO, LoginUserDTO, VerifyEmailDTO } from "./auth.schema";
 import { jwtUtils } from "@/utils/jwtUtils";
 import { IRequestUser } from "@/middleware/auth";
-import redisClient from "@/config/redis";
+import {redisClient} from "@/config/redis";
 import { sendToQueue } from "@/lib/queue";
 import { generateVerificationCode } from "@/utils/generateVerificationCode";
 import crypto from "crypto";

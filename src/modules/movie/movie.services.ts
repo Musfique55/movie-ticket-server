@@ -1,12 +1,16 @@
 import { prisma } from "@/lib/prisma";
 import AppError from "@/helper/AppError";
 import { createMovieDTO, updateMovieDTO } from "./movie.schema";
+import {redisClient, scanAndDeleteKeys} from "@/config/redis";
 
 const createMovie = async (data: createMovieDTO) => {
   try {
     const movie = await prisma.movie.create({
       data,
     });
+
+    const key = `theatre:*:movies`;
+    await scanAndDeleteKeys(key); // delete cached movies for all theatres
     return movie;
   } catch (error) {
     throw error;
@@ -30,6 +34,9 @@ const updateMovie = async (id: string, data: Partial<updateMovieDTO>) => {
       },
       data,
     });
+
+    const key = `theatre:*:movie:${id}:details`;
+    await scanAndDeleteKeys(key);
     return movie;
   } catch (error) {
     throw error;
@@ -61,6 +68,9 @@ const deleteMovie = async (id: string) => {
         id,
       },
     });
+
+    const key = `theatre:*`;
+    await scanAndDeleteKeys(key); // delete cached movies for all theatres
     return movie;
   } catch (error) {
     throw error;
