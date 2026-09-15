@@ -67,7 +67,7 @@ const createReservation = async (data: CreateReservationDTO) => {
         if (showSeats.length !== seatIds.length) {
           throw new AppError(
             "One or more selected seats are no longer available",
-            400,
+            409,
           );
         }
 
