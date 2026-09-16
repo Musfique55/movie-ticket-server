@@ -18,7 +18,6 @@
   "dependencies": {
     "@prisma/adapter-pg": "^7.9.1",
     "@prisma/client": "^7.9.1",
-    "prisma": "^7.9.1",
     "amqplib": "^2.0.1",
     "bcryptjs": "^3.0.3",
     "cookie-parser": "^1.4.7",
@@ -34,6 +33,7 @@
     "node-cron": "^4.6.0",
     "pdfkit": "^0.19.1",
     "pg": "^8.23.0",
+    "prisma": "^7.9.1",
     "qrcode": "^1.5.4",
     "resend": "^6.22.0",
     "stripe": "^22.5.0",
@@ -43,6 +43,7 @@
   },
   "devDependencies": {
     "@types/amqplib": "^0.10.8",
+    "@types/autocannon": "^7.12.7",
     "@types/bcryptjs": "^2.4.6",
     "@types/cookie-parser": "^1.4.10",
     "@types/cors": "^2.8.19",
@@ -53,12 +54,12 @@
     "@types/node": "^24.13.3",
     "@types/pdfkit": "^0.17.6",
     "@types/pg": "^8.21.0",
+    "@types/qrcode": "^1.5.6",
     "@types/swagger-ui-express": "^4.1.8",
     "@types/yamljs": "^0.2.34",
-    "@types/qrcode": "^1.5.6",
+    "autocannon": "^8.0.0",
     "tsc-alias": "^1.9.1",
     "tsx": "^4.23.12",
-    "typescript": "^7.0.2",
-    "autocannon": "^8.0.0"
+    "typescript": "^7.0.2"
   }
 }
