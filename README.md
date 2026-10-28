@@ -77,6 +77,9 @@ DATABASE_URL="postgresql://postgres:12345@localhost:5432/ticket-booking?schema=p
 REDIS_URL="redis://localhost:6379"
 RABBITMQ_URL="amqp://guest:guest@localhost:5672"
 
+ADMIN_EMAIL=admin@gmail.com
+ADMIN_PASSWORD=admin123
+
 JWT_SECRET="your_jwt_secret"
 ACCESS_TOKEN_EXPIRES_IN="15m"
 REFRESH_TOKEN_EXPIRES_IN="7d"
