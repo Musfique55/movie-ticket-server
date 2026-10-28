@@ -2,6 +2,10 @@
 
 A TypeScript Express API for a movie ticket booking platform with authentication, seat reservation, payment processing, email delivery, and queue-driven background workflows.
 
+## Admin login info
+### ADMIN_EMAIL : admin@gmail.com
+### ADMIN_PASSWORD : admin123
+
 ## Tech Stack
 
 - Node.js + TypeScript
