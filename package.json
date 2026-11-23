@@ -9,7 +9,8 @@
     "start": "node dist/server.js",
     "db:migrate": "npx prisma migrate dev",
     "db:generate": "npx prisma generate",
-    "stripe:webhook": "stripe listen --forward-to https://movie-ticket-server-n9vr.onrender.com/webhook"
+    "stripe:webhook": "stripe listen --forward-to https://ticket-booking-server-kappa.vercel.app/webhook",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
   },
   "keywords": [],
   "author": "",
@@ -42,6 +43,8 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@swc/core": "^1.16.13",
+    "@swc/jest": "^0.2.39",
     "@types/amqplib": "^0.10.8",
     "@types/autocannon": "^7.12.7",
     "@types/bcryptjs": "^2.4.6",
@@ -58,6 +61,7 @@
     "@types/swagger-ui-express": "^4.1.8",
     "@types/yamljs": "^0.2.34",
     "autocannon": "^8.0.0",
+    "jest": "^30.5.2",
     "tsc-alias": "^1.9.1",
     "tsx": "^4.23.12",
     "typescript": "^7.0.2"
