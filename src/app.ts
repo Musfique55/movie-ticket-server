@@ -19,7 +19,7 @@ const app = express();
 // Security headers
 app.use(helmet());
 app.use(cors({
-  origin: ["http://localhost:3000", "https://movie-ticket-server-n9vr.onrender.com"],
+  origin: ["http://localhost:3000", "https://ticket-booking-server-kappa.vercel.app"],
 }));
 app.use(cookieParser());
 
@@ -36,7 +36,21 @@ app.use(morgan("dev"));
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 const swaggerDocument = YAML.load(path.join(currentDirectory, "docs/swagger.yaml"));
-app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+const CSS_URL = "https://cloudflare.com";
+
+app.use(
+  "/api/docs",
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerDocument, {
+    customCssUrl: CSS_URL,
+    customJs: [
+      "https://cloudflare.com",
+      "https://cloudflare.com",
+    ],
+  })
+);
+
+// app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // health check endpoint
 app.get("/health", (req, res) => {
