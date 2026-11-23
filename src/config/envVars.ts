@@ -16,6 +16,8 @@ const envs = [
   "GOOGLE_CLIENT_ID",
   "GOOGLE_SECRET",
   "GOOGLE_REDIRECT_URL",
+  "ADMIN_EMAIL",
+  "ADMIN_PASSWORD"
 ];
 
 const loadEnvs = () => {
@@ -42,6 +44,8 @@ const loadEnvs = () => {
     googleClientId: string;
     googleSecret: string;
     googleRedirectUrl: string;
+    adminEmail: string;
+    adminPassword: string;
   } = {
     port: process.env.PORT!,
     databaseUrl: process.env.DATABASE_URL!,
@@ -59,6 +63,8 @@ const loadEnvs = () => {
     googleClientId: process.env.GOOGLE_CLIENT_ID!,
     googleSecret: process.env.GOOGLE_SECRET!,
     googleRedirectUrl: process.env.GOOGLE_REDIRECT_URL!,
+    adminEmail: process.env.ADMIN_EMAIL!,
+    adminPassword: process.env.ADMIN_PASSWORD!,
   };
 
   return value;

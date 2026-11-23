@@ -126,7 +126,7 @@ paths:
       tags:
         - Authentication
       security:
-        - bearerAuth: []
+        - accessToken: []
       responses:
         "200":
           description: User profile details
@@ -221,7 +221,7 @@ paths:
       tags:
         - Users
       security:
-        - bearerAuth: []
+        - accessToken: []
       responses:
         "200":
           description: List of users
@@ -239,7 +239,7 @@ paths:
       tags:
         - Users
       security:
-        - bearerAuth: []
+        - accessToken: []
       parameters:
         - name: id
           in: path
@@ -260,6 +260,8 @@ paths:
       description: Creates a new movie record.
       tags:
         - Movies
+      security:
+        - accessToken: []
       requestBody:
         required: true
         content:
@@ -280,6 +282,8 @@ paths:
       description: Updates details of an existing movie.
       tags:
         - Movies
+      security:
+        - accessToken: []
       parameters:
         - name: id
           in: path
@@ -300,6 +304,8 @@ paths:
       description: Deletes a movie by ID.
       tags:
         - Movies
+      security:
+        - accessToken: []
       parameters:
         - name: id
           in: path
@@ -316,6 +322,8 @@ paths:
       description: Creates a new cinema theatre.
       tags:
         - Theatres
+      security:
+        - accessToken: []
       requestBody:
         required: true
         content:
@@ -332,6 +340,8 @@ paths:
       description: Updates theatre details.
       tags:
         - Theatres
+      security:
+        - accessToken: []
       parameters:
         - name: id
           in: path
@@ -352,6 +362,8 @@ paths:
       description: Deletes a theatre by ID.
       tags:
         - Theatres
+      security:
+        - accessToken: []
       parameters:
         - name: id
           in: path
@@ -408,6 +420,8 @@ paths:
       description: Creates a new hall in a theatre.
       tags:
         - Halls
+      security:
+        - accessToken: []
       requestBody:
         required: true
         content:
@@ -677,10 +691,10 @@ paths:
 
 components:
   securitySchemes:
-    bearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
+      accessToken:
+        type: apiKey
+        in: cookie
+        name: accessToken
 
   schemas:
     ApiResponse:

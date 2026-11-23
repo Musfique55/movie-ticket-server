@@ -29,7 +29,6 @@ export const globalErrorHandler = (
   } else if (err instanceof ZodError) {
     statusCode = 400;
     message = err.issues.map((issue) => issue.message).join(", ");
-    console.log(err);
     errors = err.issues.map((issue) => ({
       path: issue.path.join("."),
       message: issue.message,
